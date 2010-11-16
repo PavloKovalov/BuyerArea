@@ -1,0 +1,38 @@
+<table id="usercarts" width="100%">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Cart</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+            foreach ($this->carts as $cart) :
+            $cart['data'] = unserialize($cart['data']);
+            ?>
+        <tr>
+            <td><?php echo $cart['ref_id']; ?></td>
+            <td><?php echo $cart['date']; ?></td>
+            <td>
+                <?php if (is_array($cart['data'])):?>
+                <table border="1" width="100%">
+                    <thead></thead>
+                <?php foreach ($cart['data'] as $item): ?>
+                    <tr>
+                        <td><?php echo $item['id']; ?></td>
+                        <td><?php echo $item['itemId']; ?></td>
+                        <td><img src="<?php echo $this->websiteUrl.$item['photo']; ?>" width="50px"/></td>
+                        <td><?php echo $item['name']; ?></td>
+                        <td><?php echo $item['count']; ?></td>
+                        <td><?php echo $item['price']; ?></td>
+                        <td><?php echo $item['pricePerProd']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </table>
+                <?php endif;?>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>

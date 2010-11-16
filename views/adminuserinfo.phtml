@@ -1,0 +1,567 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+
+        <?php require RCMS_Object_QuickConfig_QuickConfig::PATH_HEADER; ?>
+
+		<title>{%Quote%} [<?php echo $this->quoteName; ?>]</title>
+
+        <?php $this->headScript()->prependFile((false !== @file_get_contents(RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL)) ? RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL : $this->websiteUrl . 'system/js/jquery/jquery.js'); ?>
+
+        <?php echo $this->headScript(); ?>
+
+		<?php $this->headLink()->appendStylesheet($this->websiteUrl . 'themes/securite/shopping/quote.css','screen'); ?>
+
+        <?php $this->headLink()->prependStylesheet($this->websiteUrl . 'themes/securite/shopping/print.css','print') ?>
+
+        <?php echo $this->headLink(); ?>
+
+        <script type="text/javascript">
+
+            $(document).ready(function(){
+
+                if ($('#payment_tabs').size()) {
+
+                    if (<?php echo strtotime($this->validUntil);?> < <?php echo time();?>) $('#payment_tabs').hide()
+
+                }
+
+            });
+
+        </script>
+
+	</head>
+
+	<body>
+
+		<div id="quotemain">
+
+            <div id="quotemainwrap">
+
+                <div id="tophead">
+
+                    <div id="topimage">
+
+                        <a href="<?php echo $this->websiteUrl;?>" title="Accueil : Securite-online">
+
+                            <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/header_devis.jpg" alt="Securite-online"/>
+
+                        </a>
+
+                    </div>
+
+                    <div class="quotetool" ><a href="javascript:;" onclick="window.print()" style="color:#5C5C5C;"><img alt="{%Print Quote%}" src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/btn_print.png" /></a></div>
+		    <div class="quotetool" >Ce devis a été créé <?php echo $this->quoteDate; ?></div>
+                    <?php if (time() <= strtotime($this->validUntil)) :?>
+                    <div class="quotetool" >Ce devis expire le <?php echo $this->validUntil; ?></div>
+                    <?php else: ?>
+                    <div class="quotetool" ><b>Ce devis a expiré</b></div>
+                    <?php endif; ?>
+                    <br />
+
+                    <div id="clientinfo" class="two-col bordered-box address">
+
+                        <div class="caption">
+
+                            <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_adr_facturation.gif" alt="{%Billing Address%}"/>
+
+                        </div>
+                        <p><span><?php echo $this->userCompany; ?></span></p>
+                        <p><span><?php echo $this->userName; ?></span></p>
+                        <p><span>
+
+                        <?php if ($this->userAddress1!='') echo $this->userAddress1. ', ';
+
+                              if ($this->userAddress2!='') echo $this->userAddress2 ; ?>
+
+                            </span></p>
+
+                        <p><span>
+
+                        <?php if ($this->userZip!='') echo $this->userZip .', ';
+
+                         if ($this->userCity!='') echo $this->userCity .', ';
+
+                         if ($this->userState && $this->userState!='null') echo $this->userState.', ';
+
+                         if ($this->userCountry!='') echo $this->userCountry;
+
+                         ?></span>
+
+                        </p>
+
+                        <p><span><?php if (trim($this->userPhone)!='') echo $this->userPhone; ?></span></p>
+
+                        <p><span><a href="mailto:<?php echo $this->userEmail; ?>"><?php echo $this->userEmail; ?></a></span></p>
+
+
+
+
+
+					</div>
+
+                    <?php if (isset($this->shippingAddress)) : ?>
+
+                    <div id="shippinginfo" class="two-col bordered-box address">
+
+                        <div class="caption">
+                            <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_adr_livraison.gif" alt="{%Shipping Address%}" />
+                        </div>
+                        <p><span><?php echo $this->shippingAddress['firstname'].' '.$this->shippingAddress['lastname']; ?></span></p>
+                        <p><span>
+                        <?php if (trim($this->shippingAddress['address1'])!='') echo $this->shippingAddress['address1'];
+                         if (trim($this->shippingAddress['address1'])!='' && trim($this->shippingAddress['address2'])!='') echo ', ';
+                         if (trim($this->shippingAddress['address2'])!='') echo $this->shippingAddress['address2'] ; ?></span></p>
+                        <p><span>
+                        <?php  if ($this->shippingAddress['zip']!='') echo $this->shippingAddress['zip'].', ';
+
+                               if ($this->shippingAddress['city']!='') echo $this->shippingAddress['city'].', ';
+
+                               if ($this->shippingAddress['state']) echo $this->shippingAddress['state'],', ';
+
+                               if ($this->shippingAddress['country']!='') echo $this->shippingAddress['country'];
+
+                         ?></span>
+                        </p>
+                        <p><span><?php if ($this->shippingAddress['phone']!='') echo $this->shippingAddress['phone']; ?></span></p>
+                        <p>
+                            <span>
+				<a href="mailto:<?php echo $this->shippingAddress['email']; ?>">
+					<?php echo $this->shippingAddress['email']; ?>
+				</a>
+			    </span>
+                        </p>
+                    </div>
+
+                    <?php endif; ?>
+
+				</div>
+
+
+
+                <br />
+
+
+
+                <div id="quotebody" class="bordered-box" style="clear:both;">
+
+                    <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_devis.gif" alt="{%Quote%}" /></div>
+
+					<table border="0" cellpadding="0" cellspacing="0">
+
+                        <tbody id="quoteusercart">
+
+                            <tr id="usercart-legend">
+
+                                <th class="photo">{%Photo%}</th>
+
+                                <th class="name">{%Product%}</th>
+
+                                <th class="note">{%Note%}</th>
+
+                                <th class="price">{%Price%} (<span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span>)</th>
+
+                                <th class="qty">{%Qty%}</th>
+
+                                <th class="fullprice">{%Total price%} (<span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span>)</th>
+
+                            </tr>
+
+                            <?php if(!empty($this->cartData)): ?>
+
+                                <?php foreach ($this->cartData as $id => $cartItem): ?>
+
+                                <tr class="usercart-item-product">
+
+                                    <td class="photo"><img src="<?php echo $this->websiteUrl . $cartItem['photo']; ?>" width="50" height="50" alt="<?php echo $cartItem['name']; ?>"/></td>
+
+                                    <td class="name"><?php echo $cartItem['name']; ?></td>
+
+                                    <td class="note"><?php echo $cartItem['note']?$cartItem['note']:'-'; ?></td>
+
+                                    <td class="price"><?php echo $cartItem['price']; ?>&nbsp;<span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                                    <td class="qty"><?php echo $cartItem['count']; ?></td>
+
+                                    <td class="fullprice"><?php echo $cartItem['count']*$cartItem['price']; ?>&nbsp;<span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                                </tr>
+
+                                <?php endforeach; ?>
+
+                            <?php endif;?>
+<?php if ($this->shoppingConfigData['show-price-ati'] == '1'): ?>
+<tr>
+	<td class="lbl" colspan="5">{%Sub-total%}:</td>
+	<td class="cnt"><?php echo number_format($this->totalPrice+$this->totalTax,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+</tr>
+<tr>
+<?php if (!empty($this->shipping) && $this->shipping != '0') : ?>
+	<td class="lbl" colspan="5">{%Shipping%}:</td>
+	<td class="cnt"><?php echo number_format($this->shipping,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+<?php endif; ?>
+</tr>
+<?php if ($this->discount) :?>
+<tr>
+	<td class="lbl" colspan="5">{%Discount%}:</td>
+	<td class="cnt"><?php echo number_format($this->discount,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+</tr>
+<?php endif;?>
+<tr>
+	<td class="lbl" colspan="5">{%Total%}:</td>
+	<td class="cnt" id="grand-total"><?php echo number_format((($this->totalPrice-$this->discount)+$this->totalTax+$this->shipping),2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+</tr>
+<tr>
+	<td class="lbl" colspan="5">{%Inc. Tax%}:</td>
+	<td class="cnt"><?php echo number_format($this->totalTax,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+</tr>
+<tr>
+	<td class="lbl" colspan="5">{%Total w/o Tax%}:</td>
+	<td class="cnt" id="grand-total"><?php echo number_format((($this->totalPrice-$this->discount)+$this->shipping),2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+</tr>
+<?php else: ?>
+                            <tr>
+
+                                <td class="lbl" colspan="5">{%Sub-total%}:</td>
+
+                                <td class="cnt"><?php echo number_format($this->totalPrice,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                            </tr>
+
+                            <tr>
+
+                                <td class="lbl" colspan="5">{%Tax%}:</td>
+
+                                <td class="cnt"><?php echo number_format($this->totalTax,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                            </tr>
+
+                            <?php if (!empty($this->shipping) && $this->shipping != '0') : ?>
+
+                            <tr>
+
+                                <td class="lbl" colspan="5">{%Shipping%}:</td>
+
+                                <td class="cnt"><?php echo number_format($this->shipping,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                            </tr>
+
+                            <?php endif; ?>
+
+                            <?php if ($this->discount) :?>
+
+                            <tr>
+
+                                <td class="lbl" colspan="5">{%Discount%}:</td>
+
+                                <td class="cnt"><?php echo number_format($this->discount,2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                            </tr>
+
+                            <?php endif;?>
+
+                            <tr>
+
+                                <td class="lbl" colspan="5">{%Grand Total%}:</td>
+
+                                <td class="cnt" id="grand-total"><?php echo number_format((($this->totalPrice-$this->discount)+$this->totalTax+$this->shipping),2,'.',''); ?> <span style="font-size: 12px;"><?php echo $this->shoppingConfigData['currency']; ?></span></td>
+
+                            </tr>
+<?php endif; ?>
+                        </tbody>
+
+                    </table>
+
+				</div>
+
+<!--				<div id="quotefooter">
+
+					<?php echo ($this->quoteDisclaimer == 'Disclaimer: ') ? '' : $this->quoteDisclaimer; ?>
+
+				</div>-->
+
+
+
+                <br />
+
+
+
+                <div id="consultants" class="bordered-box">
+
+                    <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_commande_tel.gif" alt="{%Information%}" /></div>
+
+                    <p style="text-align: center;margin: 3px 0;">Appelez <strong>GRATUITEMENT</strong>, l'un de nos conseillers en communiquant votre numéro de dossier.</p>
+
+                    <div class="one-third">
+
+                        <p id="devis-no">Devis N°<?php echo $this->quoteId; ?></p>
+
+                        <div>
+
+                            <div class="two-col">
+
+                                <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/charlotte_parois.jpg" alt="Charlotte Parois"/>
+
+                                <br/>Isabelle
+
+                            </div>
+
+                            <div class="two-col">
+
+                                <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/alexandre_zitoun.jpg" alt="Alexandre Zitoun"/>
+
+                                <br/>Alexandre
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="one-third" style="width: 220px;">
+
+                        <div style="position:absolute;top:30%;">
+
+                            <div style="position: absolute; left: 105px; top: 5px; font: bold 16px Arial,Helvetica,sans-serif; color: rgb(0, 153, 51);">0805 460 800</div>
+
+                            <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/numVertDevis.png" />
+
+                            <p align="center">&nbsp;Du lundi au vendredi 9h/19h</p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="one-third">
+
+                        <p>
+
+                            <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/num_inter_devis.gif" />
+
+                        </p>
+
+                        <div style="margin: 10px 0;">
+
+                            <div>
+
+                                <div class="two-col">
+
+                                    <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/drapeau_belgique.gif"/>
+
+                                    <br/>Suisse
+
+                                </div>
+
+                                <div class="two-col">
+
+                                    <p><strong>BIENTOT</strong></p>
+
+                                    <p>(appel gratuit)</p>
+
+                                </div>
+
+                            </div>
+
+                            <div>
+
+                                <div class="two-col">
+
+                                    <img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/drapeau_suisse.gif" />
+
+                                    <br/>Belgique
+
+                                </div>
+
+                                <div class="two-col">
+
+                                    <p><strong>0 800 00 20 19</strong></p>
+
+                                    <p>(appel gratuit)</p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                </div>
+
+
+
+                <br />
+
+                <?php if (time() <= strtotime($this->validUntil)) :?>
+
+                <div id="payment_tabs" class="bordered-box">
+
+                        <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_finaliser_cmd.gif" alt="{%Finalize my request%}"/></div>
+
+
+
+                        <ul id="finalize_payment">
+
+                            <li><a href="#check" title="{%With Check%}"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/btn_bychek.png" alt="{%With Check%}"/></a></li>
+
+                            <li><a href="#bill" title="{%Bank Transfer%}"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/btn_byvir.png" alt="{%Bank Transfer%}"/></a></li>
+
+                            <li><a href="#cc" title="{%By CC%} ({%secure%})" onclick="$('form[name=pay-with-paybox]').find(':submit').click();return false;"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/btn_CB.png" alt="{%By CC%} ({%secure%})"/></a></li>
+
+                        </ul>
+
+
+
+                        <div id="check" class="payment_tab" style="display:none">
+
+                            <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_cmd_cheque.gif" alt="{%With Check%}"/></div>
+
+                            <p>
+
+                            Pour valider la commande, merci de libeller votre ch&egrave;que &agrave; l&rsquo;ordre de S.A.M.
+
+                            <br />
+
+                            Faites une <u>photocopie du ch&egrave;que</u> puis faxez la avec le devis sign&eacute; au num&eacute;ro suivant :
+
+                            <br />
+
+                            F : 04 93 93 19 95  ou envoyez les par mail à contact@securite-online.fr</p>
+
+                            <p>Envoyez votre ch&egrave;que par voie postale &agrave; l&rsquo;adresse suivante :<br />
+
+                            S.A.M. &ndash; Le 601 - Avenue de Fréjus &ndash; 06210 MANDELIEU</p>
+
+
+
+                            <p>J'atteste avoir pris connaissance des
+
+                            <a href="<?php echo $this->shoppingConfigData['policy_page_url']; ?>" target="_blank" title="Conditions générales de vente">&nbsp;conditions générales de vente</a>&nbsp;[Signature valant bon pour accord]
+
+                            </p>
+
+                            <p style="margin: 15px 0 50px 0; text-align: center; font-weight: bold">
+
+                            <span style="margin: 0pt 60px;">NOM & PRENOM</span>
+
+                            <span style="margin: 0pt 60px;">DATE</span>
+
+                            <span style="margin: 0pt 60px;">SIGNATURE</span>
+
+                            </p>
+
+                        </div>
+
+                        <div id="bill" class="payment_tab" style="display:none">
+
+                            <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_cmd_virement.gif" alt="{%Bank Transfer%}"/></div>
+
+                            <p>Pour valider la commande, merci de retourner le devis signé et de nous envoyer par fax au 04 93 93 19 95 la copie de votre ordre de virement (fourni par la banque) ou par mail à contact@securite-online.fr</p>
+
+                             <p>Nos coordonnées bancaires sont les suivantes :<br>
+
+                              <strong>Pour virement France :</strong><br>
+
+                              Code Banque : 19106 Code Guichet : 00605 Compte : 43607264954 Clé : 63<br>
+
+                              Titulaire du compte : Sécurité Alarme Méditerranée<br>
+
+                              Domiciliation : Crédit Agricole Mandelieu<br>
+
+                              <strong>Pour Virement International :</strong><br>
+
+                              IBAN : FR76 1910 6006 0543 6072 6495 463<br>
+
+                              BIC : AGRIFRPP891
+
+                            </p>
+
+
+
+                            <p>J'atteste avoir pris connaissance des
+
+                            <a href="<?php echo $this->shoppingConfigData['policy_page_url']; ?>" target="_blank" title="Conditions générales de vente">&nbsp;conditions générales de vente</a>&nbsp;[Signature valant bon pour accord]
+
+                            </p>
+
+                            <p style="margin: 15px 0 50px 0; text-align: center; font-weight: bold">
+
+                            <span style="margin: 0pt 60px;">NOM & PRENOM</span>
+
+                            <span style="margin: 0pt 60px;">DATE</span>
+
+                            <span style="margin: 0pt 60px;">SIGNATURE</span>
+
+                            </p>
+
+                        </div>
+
+                        <div id="cc" class="payment_tab" style="display:none">
+
+                            <div class="caption"><img src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/titre_cmd_CB.gif" alt="{%By CC%} ({%secure%})"/></div>
+
+                            {$plugin:paybox:<?php echo $this->userEmail?$this->userEmail:''; ?>:<?php echo ($this->totalPrice-$this->discount)+$this->totalTax+$this->shipping ; ?>}
+
+                        </div>
+
+                </div>
+
+                <script type="text/javascript">
+
+                    $(function() {
+
+                        $('#finalize_payment').find('li:not(:last)').click(function(event){
+
+                            event.preventDefault()
+
+                            var selector = $(this).find('a').attr('href')
+
+                            $(this).closest('ul').hide()
+
+                            var caption = $(selector).find('div.caption').detach()
+
+                            $(selector).show()
+
+                            $('#payment_tabs').children('div.caption').remove()
+
+                            $('#payment_tabs').prepend(caption)
+
+                        });
+
+
+
+                    })
+
+                </script>
+
+                <?php endif; ?>
+
+
+
+                <br />
+
+                <div class="quotetool" ><a href="javascript:;" onclick="window.print()" style="color:#5C5C5C;"><img alt="{%Print Quote%}" src="<?php echo $this->websiteUrl; ?>themes/securite/images/quote/btn_print.png" /></a></div>
+
+                <br />
+
+                <div id="companyinfo">
+
+                    <p style="text-align: center; font-weight: bold;">Sécurité Alarme Méditerranée (SAM) - Le 601 - Avenue de Fréjus - 06210 MANDELIEU</p>
+
+                    <p style="text-align: center; font-weight: bold;">RCS Cannes 477 575 666 – TVA FR 534 775 756 66 - Tél : +33 (0)4 93 93 47 62 - Fax : +33 (0)4 93 93 19 95</p>
+
+                </div>
+
+                <br />
+
+			</div>
+
+
+
+		</div>
+
+	</body>
+
+</html>

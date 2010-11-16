@@ -1,0 +1,118 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+#buyerarea_main {
+    font-family: arial, serif;
+    font-size: 14px;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
+table {
+    font-family: arial, serif;
+    font-size: 13px;
+}
+
+#buyerarea_main #buyerarea_userinfo {
+    display: block;
+    position: fixed;
+    right: 10px;
+    bottom: 0;
+    width: 500px;
+    background-color: #eee;
+    margin: 0 10px;
+    padding: 15px 10px 10px;
+}
+#buyerarea_main .caption {
+    font-size:120%;
+    margin:5px 20px;
+}
+#buyerarea_main #buyerarea_tabs ul {
+    margin: 0;
+}
+
+#buyerarea_main #buyerarea_usermenu {
+    -moz-border-radius:8px;
+    -webkit-border-radius:8px;
+    background-color:#EEEEEE;
+    border:1px solid #7C7C7C;
+    bottom:0;
+    display:block;
+    min-height:32px;
+    margin:0;
+    padding:5px 20px;
+    position:fixed;
+    right:10px;
+    width:auto;
+}
+#buyerarea_main #buyerarea_manageclients {
+
+}
+/*** Table header ***/
+.DataTables_sort_wrapper .css_right {
+    float: right;
+}
+
+.dataTables_filter {
+    float: right;
+    padding: 2px 10px;
+}
+
+/*** Table body ***/
+.dataTables_wrapper tr {
+    
+}
+.dataTables_wrapper .odd {
+    background-color: #EFEFEF;
+}
+
+.dataTables_wrapper .even {
+    background-color: #E7E7E7;
+}
+
+/*** bottom toolbar ***/
+.bottom-toolbar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-width: 1px 0 !important;
+}
+
+.dataTables_wrapper .dataTables_info {
+    float: left; 
+    margin: 2px 5px;
+}
+
+.dataTables_wrapper .paging_full_numbers {
+    margin: 2px 10px;
+    float: right;
+}
+.dataTables_wrapper .dataTables_paginate span {margin: 0}
+
+/*** userinfo form **/
+#userinfo-form {
+    text-align: center;
+}
+#userinfo-form fieldset {
+    border: none;
+    width: 49%;
+    display: inline;
+}
+#userinfo-form p {
+    clear: both;
+    text-align: right;
+    line-height: 26px;
+    padding: 1px 10px;
+}
+#userinfo-form label {
+    float: left;
+    padding-right: 10px;
+}
+#userinfo-form input,
+#userinfo-form select {
+    width: 120px;
+}

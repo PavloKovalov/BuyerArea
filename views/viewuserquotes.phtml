@@ -1,0 +1,29 @@
+<table id="userquotes" width="100%">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Valid Until</th>
+            <th>Preview link</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+            foreach ($this->quotes as $quote) :
+            quote
+            ?>
+        <tr>
+            <td><?php echo $quote['ref_id']; ?></td>
+            <td><?php echo $quote['date']; ?></td>
+            <td><?php echo $quote['status']; ?></td>
+            <td><?php echo $quote['valid_until']; ?></td>
+            <td>
+                <a href="<?php echo $this->websiteUrl; ?>sys/backend_quote/preview/qid/<?php echo $quote['ref_id'].'.'.md5($quote['ref_id']).'.'.$quote['ref_id']; ?>" target="_blank" title="Quote View">
+                    Quote View
+                </a>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>

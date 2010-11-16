@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+    <head>
+        <?php $this->headScript()->appendFile((false !== @file_get_contents(RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL)) ? RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL : $this->websiteUrl . 'system/js/jquery/jquery.js'); ?>
+        <?php $this->headScript()->appendFile((false !== @file_get_contents(RCMS_Object_QuickConfig_QuickConfig::G_JQUI_HOSTED_URL)) ? RCMS_Object_QuickConfig_QuickConfig::G_JQUI_HOSTED_URL : $this->websiteUrl . 'system/js/jquery/jquery-ui.js'); ?>
+        <?php $this->headScript()->appendFile($this->websiteUrl . 'system/js/jquery/plugins/DataTables/jquery.dataTables.min.js'); ?>
+        <?php echo $this->headScript(); ?>
+        <?php $this->headLink()->prependStylesheet($this->websiteUrl . 'plugins/buyerarea/css/buyerarea.css','screen'); ?>
+        <?php $this->headLink()->appendStylesheet($this->websiteUrl . 'plugins/buyerarea/css/jquery-ui/jquery-ui-1.8.6.custom.css');?>
+        <?php echo $this->headLink(); ?>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Buyer Area :: Manage client accounts</title>
+        <script type="text/javascript">
+            var buyersTable;
+            $(document).ready(function(){
+                $( "div:ui-dialog" ).dialog( "destroy" );
+                
+                $('#dialog-userinfo').dialog({
+                    autoOpen: false,
+                    resizable: false,
+                    width: 600,
+                    height: 400,
+                    modal: true,
+                    buttons: {
+                        "Save": function(){
+                            $(this).dialog( "close" );
+                        },
+                        Cancel: function(){
+                            $(this).dialog( "close" );
+                        }
+                    },
+                    beforeClose: function(event, ui) { $(this).find('#userinfo-form input').val(''); $(this).find('select[name$="state"]').html('') }
+                });
+
+                $('.button-info').button({icons: {primary: "ui-icon-person"}}).live('click', function(){
+                    var id = $(this).closest('tr').find('td.buyer-id').text();
+                    var userdata = {};
+                    
+                    $.ajax({
+                        async: false,
+                        url: '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=getbuyerinfo',
+                        type: 'POST',
+                        data: {id: id},
+                        dataType: 'json',
+                        success: function(data){
+                            if (data.done !== false){
+                                var billAdr = data.billing_address;
+                                if (billAdr !== null){
+                                    if (billAdr.country == 'US' || billAdr.country == 'CA') {
+                                        $('#billing-address-state').html(loadStates(billAdr.country))
+                                    }
+                                    for (i in billAdr) {
+                                        $('#userinfo-form').find(':input[name="billing-address-'+i+'"]').val(billAdr[i]);
+                                    }
+                                }
+
+                                var shippAdr = data.shipping_address;
+                                if (shippAdr !== null){
+                                    for (j in shippAdr){
+                                        $('#userinfo-form').find(':input[name="shipping-address-'+j+'"]').val(shippAdr[j]);
+                                    }
+                                    if (null !== shippAdr.state){
+                                        $('#shipping-address-state').html(loadStates(shippAdr.country)).val(shippAdr.state);
+                                    }
+                                }
+                                $('#dialog-userinfo').dialog( "open" );
+                            }
+                        }
+                    });
+                });
+
+                $('.button-cart').button({icons: {primary: "ui-icon-cart"}}).click(function(){
+                    $( "#dialog-usercarts:ui-dialog" ).dialog( "destroy" );
+                    var id = $(this).closest('tr').find('td.buyer-id').text();
+                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getusercarts', {id: id},
+                        function(responce){
+                            if (responce.length) {
+                                $( "#dialog-usercarts").html(responce)
+                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
+                                    .find('table#usercarts')
+                                    .dataTable({
+                                        "bJQueryUI": true,
+                                        "bAutoWidth": false,
+                                        "bPaginate": false,
+                                        "sScrollY": "300",
+                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
+                                    });
+                            }
+                        },
+                        'html'
+                    );
+                });
+                
+                $('.button-quote').button({icons: {primary: "ui-icon-document"}}).click(function(){
+                    $( "#dialog-userquotes:ui-dialog" ).dialog( "destroy" );
+                    var id = $(this).closest('tr').find('td.buyer-id').text();
+                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getuserquotes', {id: id},
+                        function(responce){
+                            if (responce.length) {
+                                $( "#dialog-userquotes").html(responce)
+                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
+                                    .find('table#userquotes')
+                                    .dataTable({
+                                        "bJQueryUI": true,
+                                        "bAutoWidth": false,
+                                        "bPaginate": false,
+                                        "sScrollY": "300",
+                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
+                                    });
+                            }
+                        },
+                        'html'
+                    );
+                });
+
+                $('.button-delete').button({icons: {primary: "ui-icon-trash"}}).live('click', function(){
+                    $( "#dialog-delete:ui-dialog" ).dialog( "destroy" );
+                    var id = $(this).closest('tr').find('td.buyer-id').text();
+                    $( "#dialog-delete" ).dialog({
+                        resizable: false,
+                        draggable: false,
+                        height: 140,
+                        modal: true,
+                        buttons: {
+                            "Delete this client": function() {
+                                $.post(
+                                    '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=remclient',
+                                    {id: id},
+                                    function(responce){
+                                        if (responce.done) { $( this ).dialog( "close" ); }
+                                    },
+                                    'json'
+                                )
+                            },
+                            Cancel: function() {
+                                $( this ).dialog( "close" );
+                            }
+                        }
+                    });
+                });
+                $('.user-toolbar-button').button("option", "text", false)//.parent().buttonset();
+
+                buyersTable = $('#buyerarea_buyers').dataTable({
+                    "bJQueryUI": true,
+                    "bAutoWidth": false,
+                    "iDisplayLength": 20,
+                    "bLengthChange": false,
+                    "sDom": '<"ui-widget-header ui-helper-clearfix"f>t<"bottom-toolbar ui-widget-header"ip>',
+                    "sPaginationType": "full_numbers",
+//                    "bPaginate": false,
+//                    "sScrollY": "90%",
+                    "aoColumnDefs": [
+                        { "bSortable": false, "aTargets": [ -1 ] }
+                    ]
+                });
+
+            });
+
+            function loadStates(country) {
+                var str = '';
+
+                switch (country) {
+                    case 'US':
+                        var states = <?php echo json_encode(RCMS_Object_QuickConfig_QuickConfig::$stateListUSA); ?> ;
+                        break;
+                    case 'CA':
+                        var states = <?php echo json_encode(RCMS_Object_QuickConfig_QuickConfig::$stateListCanada); ?> ;
+                        break;
+                    default:
+                        var states = {}
+                        break;
+                }
+                for (var state in states){
+                    str += '<option value="'+state+'">'+states[state]+'</option>'
+                }
+                return str;
+            }
+        </script>
+    </head>
+    <body>
+        <div id="buyerarea_main">
+
+            <div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
+                <div class="caption">Manage clients</div>
+            </div>
+            
+            <div id="dialogs-container" style="display: none">
+                <div id="dialog-delete" title="Delete client">
+                    <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>This client will be permanently deleted and cannot be recovered. Are you sure?</p>
+                </div>
+
+                <!--userinfo dialog for admin area-->
+                <div id="dialog-userinfo" title="User details">
+                    <form action="javascript:;"  name="userinfo" id="userinfo-form">
+                        <fieldset title="billing-address" >
+                            <div class="ui-widget-header ui-corner-top">Billing Address:</div>
+                            <div class="ui-widget-content ui-corner-bottom">
+                                <p><label for="billing-address-firstname">Firstname:</label><input type="text" name="billing-address-firstname" value="" /></p>
+                                <p><label for="billing-address-lastname">Lastname:</label><input type="text" name="billing-address-lastname" value="" /></p>
+                                <p><label for="billing-address-email">E-mail:</label><input type="text" name="billing-address-email" value="" /></p>
+                                <p><label for="billing-address-phone">Phone:</label><input type="text" name="billing-address-phone" value="" /></p>
+                                <p><label for="billing-address-country">Country:</label>
+                                    <?php echo $this->formSelect('billing-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
+                                </p>
+                                <p><label for="billing-address-city">City:</label><input type="text" name="billing-address-city" value="" /></p>
+                                <p><label for="billing-address-state">State:</label>
+                                    <?php echo $this->formSelect('billing-address-state'); ?></p>
+                                <p><label for="billing-address-zip">Zip:</label><input type="text" name="billing-address-zip" value="" /></p>
+                            </div>
+                        </fieldset>
+                        <fieldset title="shipping-address" >
+                            <div class="ui-widget-header ui-corner-top">Shipping Address:</div>
+                            <div class="ui-widget-content ui-corner-bottom">
+                                <p><label for="shipping-address-firstname">Firstname:</label><input type="text" name="shipping-address-firstname" value="" /></p>
+                                <p><label for="shipping-address-lastname">Lastname:</label><input type="text" name="shipping-address-lastname" value="" /></p>
+                                <p><label for="shipping-address-email">E-mail:</label><input type="text" name="shipping-address-email" value="" /></p>
+                                <p><label for="shipping-address-phone">Phone:</label><input type="text" name="shipping-address-phone" value="" /></p>
+                                <p><label for="shipping-address-country">Country:</label>
+                                    <?php echo $this->formSelect('shipping-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
+                                </p>
+                                <p><label for="shipping-address-city">City:</label><input type="text" name="shipping-address-city" value="" /></p>
+                                <p><label for="shipping-address-state">State:</label>
+                                    <?php echo $this->formSelect('shipping-address-state'); ?></p>
+                                <p><label for="shipping-address-zip">Zip:</label><input type="text" name="shipping-address-zip" value="" /></p>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div><!--end #dialog-userinfo-->
+
+                <!--user carts dialog-->
+                <div id="dialog-usercarts">
+
+                </div><!--end #dialog-usercarts-->
+
+                <!--user quotes dialog-->
+                <div id="dialog-userquotes">
+
+                </div><!--end #dialog-userquotes -->
+
+            </div>
+
+            <div id="buyerarea_manageclients">
+                <?php if ($this->buyers) : ?>
+                <table class="buyerarea_buyertable" id="buyerarea_buyers" width="100%">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Client Name</th>
+                            <th>E-mail</th>
+                            <th>Registered</th>
+                            <th>Last action</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($this->buyers as $buyer) :?>
+                    <?php $buyer['billing_address'] = unserialize($buyer['billing_address']) ;?>
+                    <?php $buyer['shipping_address'] = unserialize($buyer['shipping_address']) ;?>
+                        <tr>
+                            <td class="buyer-id"><?php echo $buyer['id']; ?></td>
+                            <td><?php echo $buyer['nickname'] ; ?></td>
+                            <td><?php echo $buyer['email']; ?></td>
+                            <td><?php echo date('d M Y H:i:s', strtotime($buyer['reg_date'])); ?></td>
+                            <td><?php echo $buyer['action'].' #'.$buyer['action_id'];?> on <?php echo date('d M Y H:i:s', strtotime($buyer['action_date']));?></td>
+                            <td align="center">
+                                <div class="user-toolbar"> <!--ui-widget-header ui-corner-all-->
+                                    <button class="user-toolbar-button button-info" >Info</button>
+                                    <button class="user-toolbar-button button-cart" >Carts</button>
+                                    <button class="user-toolbar-button button-quote" >Quotes</button>
+                                    <button class="user-toolbar-button button-delete" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php else: ?>
+                <div class="ui-state-error ui-priority-primary"><span class="ui-icon ui-icon-alert" style="float:left"></span>No clients yet!</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </body>
+</html>
