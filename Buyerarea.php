@@ -222,22 +222,19 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return array_key_exists($keys, $searcharray);
     }
 
-    public function test(){
-        //$id = mt_rand(100,200);
-        $st = microtime(1);
-        
-        //var_dump($this->_model->selectAllUserCartsByUserId(3));
-        var_dump($this->_model->selectAllUserQuotesByUserId(4));
-        //$this->_view->carts = $this->_model->selectAllUserQuotesByUserId(3);
-        //echo $this->_view->render('viewusercarts.phtml');
-        var_dump((microtime(1)-$st) .' msec');
-    }
-
+	/**
+	 * method render main backed screen
+	 * @return <void>
+	 */
     private function manageClients(){
         $this->_view->buyers = $this->_model->selectAllBuyers();
 		echo $this->_view->render('manageclients.phtml');
 	}
 
+	/**
+	 * method returns informatiom about buyer (AJAX)
+	 * @return json
+	 */
     public function getbuyerinfo(){
         if ( $id = $_POST['id'] ) {
             $data = $this->_model->selectUserInfoByUserId($id);
@@ -251,6 +248,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         echo json_encode(array('done'=>'false'));
     }
 
+	/**
+	 * method generates array for DataTable with users payment history (AJAX)
+	 * @return json
+	 */
 	private function getbuyerpayments(){
 		if ( $id = $_REQUEST['id'] ) {
 			$result = array();
@@ -260,19 +261,23 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			//var_dump($carts);
 			if ($quotes) {
 				foreach ($quotes as $quote) {
+					$quoteLink = '<a href="'.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/quote/id/'.$quote['ref_id'].'" title="Quote">Quote</a>';
 					array_push($result, array(
 						$quote['ref_type'].' '.$quote['ref_id'],
 						$quote['date'],
-						'Status: '.$quote['status']
+						'Status: '.$quote['status'],
+						$quoteLink
 					));
 				}
 			}
 			if ($carts){
 				foreach ($carts as $cart) {
+					$pdfLink = '<a href="'.$this->_websiteUrl.'sys/backend_quote/pdf/type/cart/id/'.$cart['ref_id'].'/title/invoice/" title="Invoice">Invoice</a>';
 					array_push($result, array(
 						$cart['ref_type'].' '.$cart['ref_id'],
 						$cart['date'],
-						'<a href="#">View cart</a>'
+						'',
+						$pdfLink
 					));
 				}
 			}
@@ -306,7 +311,6 @@ class Buyerarea implements RCMS_Core_PluginInterface {
             }
         }
         $this->_view->settings = $this->_model->selectSettings();
-
         echo $this->_view->render('settings.phtml');
     }
 
