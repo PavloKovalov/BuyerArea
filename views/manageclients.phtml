@@ -156,6 +156,14 @@
                         }
                     });
                 });
+				$('#button-settings').button({icons: {primary: "ui-icon-gear"}}).live('click', function(){
+					$('#dialog-settings').dialog({
+						modal: true,
+						open: function(){
+							$(this).load('<?php echo $this->websiteUrl;?>plugin/buyerarea?run=settings');
+						}
+					})
+				});
                 $('.user-toolbar-button').button("option", "text", false)//.parent().buttonset();
 
                 buyersTable = $('#buyerarea_buyers').dataTable({
@@ -199,9 +207,13 @@
         <div id="buyerarea_main" class="ui-dialog" style="padding: 0">
 			<div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
 				<span class="ui-dialog-title">Manage clients</span>
+<!--				<button class="user-toolbar-button" id="button-settings" >Settings</button>-->
 				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
 			</div>
             <div id="dialogs-container" style="display: none">
+				<div id="dialog-settings" title="Settings">
+					
+				</div>
                 <div id="dialog-delete" title="Delete client">
                     <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>This client will be permanently deleted and cannot be recovered. Are you sure?</p>
                 </div>
@@ -250,6 +262,7 @@
 									<th>Payment</th>
 									<th>Date</th>
 									<th>Details</th>
+									<th></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -294,8 +307,10 @@
                             <td align="center">
                                 <div class="user-toolbar"> <!--ui-widget-header ui-corner-all-->
                                     <button class="user-toolbar-button button-info" >User info</button>
-<!--                                    <button class="user-toolbar-button button-cart" >Carts</button>
-                                    <button class="user-toolbar-button button-quote" >Quotes</button>-->
+<!--
+									<button class="user-toolbar-button button-cart" >Carts</button>
+                                    <button class="user-toolbar-button button-quote" >Quotes</button>
+-->
                                     <button class="user-toolbar-button button-delete" >Delete</button>
                                 </div>
                             </td>
