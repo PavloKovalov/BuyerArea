@@ -18,9 +18,9 @@
                 
                 $('#dialog-userinfo').dialog({
                     autoOpen: false,
-                    resizable: false,
-                    width: 600,
-                    height: 400,
+                    resizable: true,
+                    width: 750,
+                    height: 550,
                     modal: true,
                     buttons: {
                         "Save": function(){
@@ -30,7 +30,23 @@
                             $(this).dialog( "close" );
                         }
                     },
-                    beforeClose: function(event, ui) { $(this).find('#userinfo-form input').val(''); $(this).find('select[name$="state"]').html('') }
+					open: function(){
+						var url = '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=getbuyerpayments&id='+$('#dialog-userinfo-userid').val();
+						$('#dialog-userinfo-history-table').dataTable({
+							//"bDestroy": true,
+							"bProcessing": true,
+							"sAjaxSource": url,
+							"bJQueryUI": true,
+							"bAutoWidth": false,
+							"bPaginate": false,
+							"sScrollY": "140px"
+						});
+					},
+                    beforeClose: function(event, ui) { 
+						$(this).find('#userinfo-form input').val('');
+						$(this).find('select[name$="state"]').html('');
+						$('#dialog-userinfo-history-table').dataTable().fnDestroy();
+					}
                 });
 
                 $('.button-info').button({icons: {primary: "ui-icon-person"}}).live('click', function(){
@@ -64,55 +80,56 @@
                                         $('#shipping-address-state').html(loadStates(shippAdr.country)).val(shippAdr.state);
                                     }
                                 }
+								$('#dialog-userinfo-userid').val(id);
                                 $('#dialog-userinfo').dialog( "open" );
                             }
                         }
                     });
                 });
 
-                $('.button-cart').button({icons: {primary: "ui-icon-cart"}}).click(function(){
-                    $( "#dialog-usercarts:ui-dialog" ).dialog( "destroy" );
-                    var id = $(this).closest('tr').find('td.buyer-id').text();
-                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getusercarts', {id: id},
-                        function(responce){
-                            if (responce.length) {
-                                $( "#dialog-usercarts").html(responce)
-                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
-                                    .find('table#usercarts')
-                                    .dataTable({
-                                        "bJQueryUI": true,
-                                        "bAutoWidth": false,
-                                        "bPaginate": false,
-                                        "sScrollY": "300",
-                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
-                                    });
-                            }
-                        },
-                        'html'
-                    );
-                });
+//                $('.button-cart').button({icons: {primary: "ui-icon-cart"}}).click(function(){
+//                    $( "#dialog-usercarts:ui-dialog" ).dialog( "destroy" );
+//                    var id = $(this).closest('tr').find('td.buyer-id').text();
+//                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getusercarts', {id: id},
+//                        function(responce){
+//                            if (responce.length) {
+//                                $( "#dialog-usercarts").html(responce)
+//                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
+//                                    .find('table#usercarts')
+//                                    .dataTable({
+//                                        "bJQueryUI": true,
+//                                        "bAutoWidth": false,
+//                                        "bPaginate": false,
+//                                        "sScrollY": "300",
+//                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
+//                                    });
+//                            }
+//                        },
+//                        'html'
+//                    );
+//                });
                 
-                $('.button-quote').button({icons: {primary: "ui-icon-document"}}).click(function(){
-                    $( "#dialog-userquotes:ui-dialog" ).dialog( "destroy" );
-                    var id = $(this).closest('tr').find('td.buyer-id').text();
-                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getuserquotes', {id: id},
-                        function(responce){
-                            if (responce.length) {
-                                $( "#dialog-userquotes").html(responce)
-                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
-                                    .find('table#userquotes')
-                                    .dataTable({
-                                        "bJQueryUI": true,
-                                        "bAutoWidth": false,
-                                        "bPaginate": false,
-                                        "sScrollY": "300",
-                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
-                                    });
-                            }
-                        },
-                        'html'
-                    );
-                });
+//                $('.button-quote').button({icons: {primary: "ui-icon-document"}}).click(function(){
+//                    $( "#dialog-userquotes:ui-dialog" ).dialog( "destroy" );
+//                    var id = $(this).closest('tr').find('td.buyer-id').text();
+//                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getuserquotes', {id: id},
+//                        function(responce){
+//                            if (responce.length) {
+//                                $( "#dialog-userquotes").html(responce)
+//                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
+//                                    .find('table#userquotes')
+//                                    .dataTable({
+//                                        "bJQueryUI": true,
+//                                        "bAutoWidth": false,
+//                                        "bPaginate": false,
+//                                        "sScrollY": "300",
+//                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
+//                                    });
+//                            }
+//                        },
+//                        'html'
+//                    );
+//                });
 
                 $('.button-delete').button({icons: {primary: "ui-icon-trash"}}).live('click', function(){
                     $( "#dialog-delete:ui-dialog" ).dialog( "destroy" );
@@ -179,12 +196,11 @@
         </script>
     </head>
     <body>
-        <div id="buyerarea_main">
-
-            <div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
-                <div class="caption">Manage clients</div>
-            </div>
-            
+        <div id="buyerarea_main" class="ui-dialog" style="padding: 0">
+			<div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
+				<span class="ui-dialog-title">Manage clients</span>
+				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
+			</div>
             <div id="dialogs-container" style="display: none">
                 <div id="dialog-delete" title="Delete client">
                     <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>This client will be permanently deleted and cannot be recovered. Are you sure?</p>
@@ -193,6 +209,7 @@
                 <!--userinfo dialog for admin area-->
                 <div id="dialog-userinfo" title="User details">
                     <form action="javascript:;"  name="userinfo" id="userinfo-form">
+						<input type="hidden" id="dialog-userinfo-userid" value=""/>
                         <fieldset title="billing-address" >
                             <div class="ui-widget-header ui-corner-top">Billing Address:</div>
                             <div class="ui-widget-content ui-corner-bottom">
@@ -226,6 +243,19 @@
                             </div>
                         </fieldset>
                     </form>
+					<div style="padding-top: 3px;">
+						<table id="dialog-userinfo-history-table">
+							<thead>
+								<tr>
+									<th>Payment</th>
+									<th>Date</th>
+									<th>Details</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
                 </div><!--end #dialog-userinfo-->
 
                 <!--user carts dialog-->
@@ -246,18 +276,16 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Client Name</th>
+                            <th><?php echo $this->translate('Client Name'); ?></th>
                             <th>E-mail</th>
-                            <th>Registered</th>
-                            <th>Last action</th>
+                            <th><?php echo $this->translate('Registered'); ?></th>
+                            <th><?php echo $this->translate('Last action'); ?></th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($this->buyers as $buyer) :?>
-                    <?php $buyer['billing_address'] = unserialize($buyer['billing_address']) ;?>
-                    <?php $buyer['shipping_address'] = unserialize($buyer['shipping_address']) ;?>
-                        <tr>
+						<tr>
                             <td class="buyer-id"><?php echo $buyer['id']; ?></td>
                             <td><?php echo $buyer['nickname'] ; ?></td>
                             <td><?php echo $buyer['email']; ?></td>
@@ -265,9 +293,9 @@
                             <td><?php echo $buyer['action'].' #'.$buyer['action_id'];?> on <?php echo date('d M Y H:i:s', strtotime($buyer['action_date']));?></td>
                             <td align="center">
                                 <div class="user-toolbar"> <!--ui-widget-header ui-corner-all-->
-                                    <button class="user-toolbar-button button-info" >Info</button>
-                                    <button class="user-toolbar-button button-cart" >Carts</button>
-                                    <button class="user-toolbar-button button-quote" >Quotes</button>
+                                    <button class="user-toolbar-button button-info" >User info</button>
+<!--                                    <button class="user-toolbar-button button-cart" >Carts</button>
+                                    <button class="user-toolbar-button button-quote" >Quotes</button>-->
                                     <button class="user-toolbar-button button-delete" >Delete</button>
                                 </div>
                             </td>

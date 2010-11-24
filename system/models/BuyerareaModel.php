@@ -13,6 +13,11 @@ class BuyerareaModel extends Zend_Db_Table_Abstract {
     private $_shippingTable     = 'shopping_shipping';
     private $_quoteTable        = 'shopping_quote';
 
+	public function selectAllUserPayments($id) {
+		$sql = $this->getAdapter()->select()->from($this->_userHistoryTable)->where('user_id = ?', $id);
+		return $this->getAdapter()->fetchAssoc($sql);
+	}
+
     public function selectSettings() {
         $sql = $this->getAdapter()->select()->from($this->_settingsTable);
         return $this->getAdapter()->fetchPairs($sql);

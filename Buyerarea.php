@@ -7,7 +7,7 @@
  * @author Pavel Kovalyov
  * @see http://www.seotoaster.com/
  */
-
+define('BAPLUGINPATH', dirname(realpath(__FILE__)));
 require_once dirname(realpath(__FILE__)).'/system/models/BuyerareaModel.php';
 require_once dirname(realpath(__FILE__)).'/system/Buyer.php';
 
@@ -15,6 +15,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
     private $_model         = null;
     private $_view          = null;
     private $_request       = null;
+	private $_translator	= null;
     private $_websiteUrl    = '';
     private $_session       = null;
     private $_loggedUser    = null;
@@ -24,6 +25,18 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $this->_model = new BuyerareaModel();
         $this->_view  = new Zend_View();
         $this->_view->setScriptPath(dirname(realpath(__FILE__)) . '/views');
+		try {
+			$this->_translator = new Zend_Translate(array(
+				'adapter'	=> 'csv',
+				'delimiter' => ',',
+				'content'	=> BAPLUGINPATH.'/system/languages',
+				'scan'		=> Zend_Translate::LOCALE_FILENAME,
+				'locale'	=> 'en'
+			));
+			Zend_Registry::set('Zend_Translate', $this->_translator);
+		} catch (Exception $e) {
+			echo $e->getMessage();
+		}
 
         if (!empty ($options)) $this->_options = $options;
 
@@ -222,8 +235,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 
     private function manageClients(){
         $this->_view->buyers = $this->_model->selectAllBuyers();
-        echo $this->_view->render('manageclients.phtml');
-    }
+		echo $this->_view->render('manageclients.phtml');
+	}
 
     public function getbuyerinfo(){
         if ( $id = $_POST['id'] ) {
@@ -238,8 +251,39 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         echo json_encode(array('done'=>'false'));
     }
 
+	private function getbuyerpayments(){
+		if ( $id = $_REQUEST['id'] ) {
+			$result = array();
+			$quotes = $this->_model->selectAllUserQuotesByUserId((int)$id);
+			//var_dump($quotes);
+			$carts = $this->_model->selectAllUserCartsByUserId((int)$id);
+			//var_dump($carts);
+			if ($quotes) {
+				foreach ($quotes as $quote) {
+					array_push($result, array(
+						$quote['ref_type'].' '.$quote['ref_id'],
+						$quote['date'],
+						'Status: '.$quote['status']
+					));
+				}
+			}
+			if ($carts){
+				foreach ($carts as $cart) {
+					array_push($result, array(
+						$cart['ref_type'].' '.$cart['ref_id'],
+						$cart['date'],
+						'<a href="#">View cart</a>'
+					));
+				}
+			}
+			echo json_encode(array("aaData"=>$result));
+			return true;
+		}
+		echo json_encode(array('done'=>'false'));
+	}
+
     private function getusercarts(){
-        if ( $id = $_POST['id'] ) {
+        if ( $id = $_REQUEST['id'] ) {
             $this->_view->carts = $this->_model->selectAllUserCartsByUserId((int)$id);
             echo $this->_view->render('viewusercarts.phtml');
             return true;
@@ -247,7 +291,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return false;
     }
     private function getuserquotes(){
-        if ( $id = $_POST['id'] ) {
+        if ( $id = $_REQUEST['id'] ) {
             $this->_view->quotes = $this->_model->selectAllUserQuotesByUserId((int)$id);
             echo $this->_view->render('viewuserquotes.phtml');
             return true;
@@ -265,4 +309,5 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 
         echo $this->_view->render('settings.phtml');
     }
+
 }
