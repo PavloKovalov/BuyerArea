@@ -18,10 +18,11 @@
                 
                 $('#dialog-userinfo').dialog({
                     autoOpen: false,
-                    resizable: true,
+                    resizable: false,
+					draggable: true,
                     width: 750,
                     height: 550,
-                    modal: true,
+                    modal: false,
                     buttons: {
                         "Save": function(){
                             $(this).dialog( "close" );
@@ -39,8 +40,16 @@
 							"bJQueryUI": true,
 							"bAutoWidth": false,
 							"bPaginate": false,
-							"sScrollY": "140px"
+							"sScrollY": "140px",
+							"aoColumnDefs": [
+								{ "bSortable": false, "aTargets": [ -1 ] }
+							],
+							"fnInitComplete": function() {
+								$(this).find('.user-toolbar-button').button();
+								
+							}
 						});
+
 					},
                     beforeClose: function(event, ui) { 
 						$(this).find('#userinfo-form input').val('');
@@ -130,6 +139,16 @@
 //                        'html'
 //                    );
 //                });
+				$('.button-invoice').live('click',function(){
+					var url = $(this).attr('link');
+					url = url.replace('{cid}', prompt('Input invoice ID (only digits):'));
+					url = url.replace('{pm}', prompt('Payment method:'));
+					window.location.href=url;
+				});
+				$('.button-quote').live('click',function(){
+					var url = $(this).attr('link');
+					window.location.href=url;
+				});
 
                 $('.button-delete').button({icons: {primary: "ui-icon-trash"}}).live('click', function(){
                     $( "#dialog-delete:ui-dialog" ).dialog( "destroy" );
@@ -148,7 +167,7 @@
                                         if (responce.done) { $( this ).dialog( "close" ); }
                                     },
                                     'json'
-                                )
+                                );
                             },
                             Cancel: function() {
                                 $( this ).dialog( "close" );
@@ -212,7 +231,6 @@
 			</div>
             <div id="dialogs-container" style="display: none">
 				<div id="dialog-settings" title="Settings">
-					
 				</div>
                 <div id="dialog-delete" title="Delete client">
                     <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>This client will be permanently deleted and cannot be recovered. Are you sure?</p>
