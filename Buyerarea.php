@@ -19,6 +19,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
     private $_websiteUrl    = '';
     private $_session       = null;
     private $_loggedUser    = null;
+    private $_isAdminLogged = false;
     private $_options;
 
     public function __construct($options, $data) {
@@ -43,6 +44,9 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $this->_websiteUrl = $data['websiteUrl'];
         $this->_session = new Zend_Session_Namespace($this->_websiteUrl);
         $this->_loggedUser = unserialize($this->_session->currentUser);
+		if (null !== $this->_loggedUser) {
+			$this->_isAdminLogged = ($this->_loggedUser->getRoleId() == '1' || $this->_loggedUser->getRoleId() == '3')?true:false;
+		}
         $this->_view->websiteUrl = $this->_websiteUrl;
     }
 
@@ -50,20 +54,25 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         switch ($this->_options[0]){
             case 'userinfo':
                 if (!$this->_loggedUser){
-                    return;
+					return;
                 }
                 $loggedId = $this->_loggedUser->getId();
                 $user = new Buyer($loggedId);
                 if ($user->getBuyerId()) {
                     $this->_view->billingAddress = $user->getBillingAddress();
                     $this->_view->shippingAddress = $user->getShippingAddress();
-                    return $this->_view->render('attachtocpanel.phtml');
+					return $this->_view->render('attachtocpanel.phtml');
                 }
                 break;
             default :
-                break;
+				break;
         }
-
+		// I'll die if some stranger come
+		if (!$this->_isAdminLogged){
+			echo ('<script>window.location.href="'.$this->_websiteUrl.'";</script>');
+			die();
+		}
+		// I'll open my secrets to known person
         if (isset($requestParams['run']) && !empty($requestParams['run'])){
             $method = $requestParams['run'];
             if (in_array($method, get_class_methods(__CLASS__))){
@@ -136,6 +145,12 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return $user->getId();
     }
 
+	/**
+	 * Method generates password with gived lenth.
+	 * @param int $length - Lenght of password
+	 * @param bool $complicated - Use both cases and special charasters in password
+	 * @return string
+	 */
     public static function generatePassword($length = 8, $complicated = false){
         $vowels     = 'aeuy';
         $consonants = 'bdghjmnpqrstvz';
@@ -157,6 +172,14 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return $password;
     }
 
+	/**
+	 * Method send an email to user.
+	 * @param string $toMail
+	 * @param string $to
+	 * @param string $subject
+	 * @param string $body
+	 * @return bool
+	 */
     private function sendEmail($toMail, $to, $subject, $body) {
         $shoppingConfig = $this->_model->selectShopConfig();
         $settings = $this->_model->selectMailSettings();
@@ -178,6 +201,11 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return $mailer->send();
     }
 
+	/**
+	 * Method saving a record for user payment
+	 * @param array $payment
+	 * @return bool
+	 */
     public function logpayment( Array $payment){
         
         $id = $this->_loggedUser ? $this->_loggedUser->getId() : false;
@@ -261,23 +289,25 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			//var_dump($carts);
 			if ($quotes) {
 				foreach ($quotes as $quote) {
-					$quoteLink = '<a href="'.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/quote/id/'.$quote['ref_id'].'" title="Quote">Quote</a>';
+					$quoteLink		= ''.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/quote/customId/'.$quote['ref_id'];
+					$invoiceLink	= ''.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/invoice/customId/{cid}/payment/{pm}';
 					array_push($result, array(
 						$quote['ref_type'].' '.$quote['ref_id'],
 						$quote['date'],
 						'Status: '.$quote['status'],
-						$quoteLink
+						'<button class="user-toolbar-button button-quote" link="'.$quoteLink.'">Quote</button>' .
+						($quote['status']==RCMS_Object_Quote_Quote::Q_STATUS_SOLD?'<button link="'.$pdfLink.'" class="user-toolbar-button button-invoice">Invoice</button>':'')
 					));
 				}
 			}
 			if ($carts){
 				foreach ($carts as $cart) {
-					$pdfLink = '<a href="'.$this->_websiteUrl.'sys/backend_quote/pdf/type/cart/id/'.$cart['ref_id'].'/title/invoice/" title="Invoice">Invoice</a>';
+					$pdfLink = ''.$this->_websiteUrl.'sys/backend_quote/pdf/type/cart/id/'.$cart['ref_id'].'/title/invoice/customId/{cid}/payment/{pm}';
 					array_push($result, array(
 						$cart['ref_type'].' '.$cart['ref_id'],
 						$cart['date'],
 						'',
-						$pdfLink
+						'<button link="'.$pdfLink.'" class="user-toolbar-button button-invoice">Invoice</button>'
 					));
 				}
 			}
@@ -304,6 +334,9 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         return false;
     }
 
+	/**
+	 * Method returns an html of settings screen (AJAX)
+	 */
     private function settings(){
         if (isset($_POST['settings'])){
             foreach ($_POST['settings'] as $key => $value){
