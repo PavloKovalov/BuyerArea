@@ -296,7 +296,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 						$quote['date'],
 						'Status: '.$quote['status'],
 						'<button class="user-toolbar-button button-quote" link="'.$quoteLink.'">Quote</button>' .
-						($quote['status']==RCMS_Object_Quote_Quote::Q_STATUS_SOLD?'<button link="'.$pdfLink.'" class="user-toolbar-button button-invoice">Invoice</button>':'')
+						($quote['status']==RCMS_Object_Quote_Quote::Q_STATUS_SOLD?'<button link="'.$invoiceLink.'" class="user-toolbar-button button-invoice">Invoice</button>':'')
 					));
 				}
 			}
