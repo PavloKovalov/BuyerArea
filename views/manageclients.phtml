@@ -10,7 +10,7 @@
         <?php echo $this->headLink(); ?>
 
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Buyer Area :: Manage client accounts</title>
+        <title><?php echo $this->translate('Buyer Area'); ?> :: <?php echo $this->translate('Manage client accounts'); ?></title>
         <script type="text/javascript">
             var buyersTable;
             $(document).ready(function(){
@@ -24,10 +24,10 @@
                     height: 550,
                     modal: false,
                     buttons: {
-                        "Save": function(){
+                        "<?php echo $this->translate('Save'); ?>": function(){
                             $(this).dialog( "close" );
                         },
-                        Cancel: function(){
+                        "<?php echo $this->translate('Cancel'); ?>": function(){
                             $(this).dialog( "close" );
                         }
                     },
@@ -141,13 +141,13 @@
 //                });
 				$('.button-invoice').live('click',function(){
 					var url = $(this).attr('link');
-					url = url.replace('{cid}', prompt('Input invoice ID (only digits):'));
-					url = url.replace('{pm}', prompt('Payment method:'));
+					url = url.replace('{cid}', prompt('<?php echo $this->translate('Input invoice ID (only digits)'); ?>:'));
+					url = url.replace('{pm}', prompt('<?php echo $this->translate('Payment method'); ?>:'));
 					window.location.href=url;
 				});
 				$('.button-quote').live('click',function(){
 					var url = $(this).attr('link');
-					window.location.href=url;
+					prew = window.open(url);
 				});
 
                 $('.button-delete').button({icons: {primary: "ui-icon-trash"}}).live('click', function(){
@@ -159,7 +159,7 @@
                         height: 140,
                         modal: true,
                         buttons: {
-                            "Delete this client": function() {
+                            "<?php echo $this->translate('Delete this client'); ?>": function() {
                                 $.post(
                                     '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=remclient',
                                     {id: id},
@@ -169,7 +169,7 @@
                                     'json'
                                 );
                             },
-                            Cancel: function() {
+                            "<?php echo $this->translate('Cancel'); ?>": function() {
                                 $( this ).dialog( "close" );
                             }
                         }
@@ -225,15 +225,17 @@
     <body>
         <div id="buyerarea_main" class="ui-dialog" style="padding: 0">
 			<div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
-				<span class="ui-dialog-title">Manage clients</span>
+				<span class="ui-dialog-title"><?php echo $this->translate('Manage clients'); ?></span>
 <!--				<button class="user-toolbar-button" id="button-settings" >Settings</button>-->
 				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
 			</div>
             <div id="dialogs-container" style="display: none">
-				<div id="dialog-settings" title="Settings">
+				<div id="dialog-settings" title="<?php echo $this->translate('Settings'); ?>">
 				</div>
-                <div id="dialog-delete" title="Delete client">
-                    <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>This client will be permanently deleted and cannot be recovered. Are you sure?</p>
+                <div id="dialog-delete" title="<?php echo $this->translate('Delete client'); ?>">
+                    <p class="ui-state-error"><span class="ui-icon ui-icon-alert" style="float:left"></span>
+						<?php echo $this->translate('This client will be permanently deleted and cannot be recovered. Are you sure?'); ?>
+					</p>
                 </div>
 
                 <!--userinfo dialog for admin area-->
@@ -241,35 +243,35 @@
                     <form action="javascript:;"  name="userinfo" id="userinfo-form">
 						<input type="hidden" id="dialog-userinfo-userid" value=""/>
                         <fieldset title="billing-address" >
-                            <div class="ui-widget-header ui-corner-top">Billing Address:</div>
+                            <div class="ui-widget-header ui-corner-top"><?php echo $this->translate('Billing Address'); ?>:</div>
                             <div class="ui-widget-content ui-corner-bottom">
-                                <p><label for="billing-address-firstname">Firstname:</label><input type="text" name="billing-address-firstname" value="" /></p>
-                                <p><label for="billing-address-lastname">Lastname:</label><input type="text" name="billing-address-lastname" value="" /></p>
+                                <p><label for="billing-address-firstname"><?php echo $this->translate('Firstname'); ?>:</label><input type="text" name="billing-address-firstname" value="" /></p>
+                                <p><label for="billing-address-lastname"><?php echo $this->translate('Lastname'); ?>:</label><input type="text" name="billing-address-lastname" value="" /></p>
                                 <p><label for="billing-address-email">E-mail:</label><input type="text" name="billing-address-email" value="" /></p>
-                                <p><label for="billing-address-phone">Phone:</label><input type="text" name="billing-address-phone" value="" /></p>
-                                <p><label for="billing-address-country">Country:</label>
+                                <p><label for="billing-address-phone"><?php echo $this->translate('Phone'); ?>:</label><input type="text" name="billing-address-phone" value="" /></p>
+                                <p><label for="billing-address-country"><?php echo $this->translate('Country'); ?>:</label>
                                     <?php echo $this->formSelect('billing-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
                                 </p>
-                                <p><label for="billing-address-city">City:</label><input type="text" name="billing-address-city" value="" /></p>
-                                <p><label for="billing-address-state">State:</label>
+                                <p><label for="billing-address-city"><?php echo $this->translate('City'); ?>:</label><input type="text" name="billing-address-city" value="" /></p>
+                                <p><label for="billing-address-state"><?php echo $this->translate('State'); ?>:</label>
                                     <?php echo $this->formSelect('billing-address-state'); ?></p>
-                                <p><label for="billing-address-zip">Zip:</label><input type="text" name="billing-address-zip" value="" /></p>
+                                <p><label for="billing-address-zip"><?php echo $this->translate('Zip'); ?>:</label><input type="text" name="billing-address-zip" value="" /></p>
                             </div>
                         </fieldset>
                         <fieldset title="shipping-address" >
-                            <div class="ui-widget-header ui-corner-top">Shipping Address:</div>
+                            <div class="ui-widget-header ui-corner-top"><?php echo $this->translate('Shipping Address'); ?>:</div>
                             <div class="ui-widget-content ui-corner-bottom">
-                                <p><label for="shipping-address-firstname">Firstname:</label><input type="text" name="shipping-address-firstname" value="" /></p>
-                                <p><label for="shipping-address-lastname">Lastname:</label><input type="text" name="shipping-address-lastname" value="" /></p>
+                                <p><label for="shipping-address-firstname"><?php echo $this->translate('Firstname'); ?>:</label><input type="text" name="shipping-address-firstname" value="" /></p>
+                                <p><label for="shipping-address-lastname"><?php echo $this->translate('Lastname'); ?>:</label><input type="text" name="shipping-address-lastname" value="" /></p>
                                 <p><label for="shipping-address-email">E-mail:</label><input type="text" name="shipping-address-email" value="" /></p>
-                                <p><label for="shipping-address-phone">Phone:</label><input type="text" name="shipping-address-phone" value="" /></p>
-                                <p><label for="shipping-address-country">Country:</label>
+                                <p><label for="shipping-address-phone"><?php echo $this->translate('Phone'); ?>:</label><input type="text" name="shipping-address-phone" value="" /></p>
+                                <p><label for="shipping-address-country"><?php echo $this->translate('Country'); ?>:</label>
                                     <?php echo $this->formSelect('shipping-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
                                 </p>
-                                <p><label for="shipping-address-city">City:</label><input type="text" name="shipping-address-city" value="" /></p>
-                                <p><label for="shipping-address-state">State:</label>
+                                <p><label for="shipping-address-city"><?php echo $this->translate('City'); ?>:</label><input type="text" name="shipping-address-city" value="" /></p>
+                                <p><label for="shipping-address-state"><?php echo $this->translate('State'); ?>:</label>
                                     <?php echo $this->formSelect('shipping-address-state'); ?></p>
-                                <p><label for="shipping-address-zip">Zip:</label><input type="text" name="shipping-address-zip" value="" /></p>
+                                <p><label for="shipping-address-zip"><?php echo $this->translate('Zip'); ?>:</label><input type="text" name="shipping-address-zip" value="" /></p>
                             </div>
                         </fieldset>
                     </form>
@@ -277,9 +279,9 @@
 						<table id="dialog-userinfo-history-table">
 							<thead>
 								<tr>
-									<th>Payment</th>
-									<th>Date</th>
-									<th>Details</th>
+									<th><?php echo $this->translate('Payment'); ?></th>
+									<th><?php echo $this->translate('Date'); ?></th>
+									<th><?php echo $this->translate('Details'); ?></th>
 									<th></th>
 								</tr>
 							</thead>
@@ -324,12 +326,12 @@
                             <td><?php echo $buyer['action'].' #'.$buyer['action_id'];?> on <?php echo date('d M Y H:i:s', strtotime($buyer['action_date']));?></td>
                             <td align="center">
                                 <div class="user-toolbar"> <!--ui-widget-header ui-corner-all-->
-                                    <button class="user-toolbar-button button-info" >User info</button>
+                                    <button class="user-toolbar-button button-info" ><?php echo $this->translate('User info'); ?></button>
 <!--
 									<button class="user-toolbar-button button-cart" >Carts</button>
                                     <button class="user-toolbar-button button-quote" >Quotes</button>
 -->
-                                    <button class="user-toolbar-button button-delete" >Delete</button>
+                                    <button class="user-toolbar-button button-delete" ><?php echo $this->translate('Delete'); ?></button>
                                 </div>
                             </td>
                         </tr>
@@ -337,7 +339,7 @@
                     </tbody>
                 </table>
                 <?php else: ?>
-                <div class="ui-state-error ui-priority-primary"><span class="ui-icon ui-icon-alert" style="float:left"></span>No clients yet!</div>
+                <div class="ui-state-error ui-priority-primary"><span class="ui-icon ui-icon-alert" style="float:left"></span><?php echo $this->translate('No clients yet!'); ?></div>
                 <?php endif; ?>
             </div>
         </div>

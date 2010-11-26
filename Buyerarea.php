@@ -44,7 +44,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $this->_websiteUrl = $data['websiteUrl'];
         $this->_session = new Zend_Session_Namespace($this->_websiteUrl);
         $this->_loggedUser = unserialize($this->_session->currentUser);
-		if (null !== $this->_loggedUser) {
+		if ($this->_loggedUser) {
 			$this->_isAdminLogged = ($this->_loggedUser->getRoleId() == '1' || $this->_loggedUser->getRoleId() == '3')?true:false;
 		}
         $this->_view->websiteUrl = $this->_websiteUrl;
@@ -139,7 +139,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $user->setShippingAddress($shippingAddress);
         
         if ($user->save()){
-            $this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, '<b>'.$billingData['password'].'</b>');
+            $result = $this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, '<b>'.$billingData['password'].'</b>');
+			if (!$result) {
+				error_log('Error sending email to '.$billingAddress['email']);
+			}
         }
 
         return $user->getId();
@@ -207,8 +210,11 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * @return bool
 	 */
     public function logpayment( Array $payment){
-        
-        $id = $this->_loggedUser ? $this->_loggedUser->getId() : false;
+        if ($this->_isAdminLogged) {
+			$id = false;
+		} else {
+			$id = $this->_loggedUser ? $this->_loggedUser->getId() : false;
+		}
         if (!$id) {
             switch ($payment['type']){
                 case 'quote':
@@ -289,14 +295,14 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			//var_dump($carts);
 			if ($quotes) {
 				foreach ($quotes as $quote) {
-					$quoteLink		= ''.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/quote/customId/'.$quote['ref_id'];
+					$quoteLink		= ''.$this->_websiteUrl.'sys/backend_quote/preview/qid/'.$quote['ref_id'].'.'. md5($quote['ref_id']).'.'.$quote['ref_id'];
 					$invoiceLink	= ''.$this->_websiteUrl.'sys/backend_quote/pdf/type/quote/id/'.$quote['ref_id'].'/title/invoice/customId/{cid}/payment/{pm}';
 					array_push($result, array(
 						$quote['ref_type'].' '.$quote['ref_id'],
 						$quote['date'],
 						'Status: '.$quote['status'],
-						'<button class="user-toolbar-button button-quote" link="'.$quoteLink.'">Quote</button>' .
-						($quote['status']==RCMS_Object_Quote_Quote::Q_STATUS_SOLD?'<button link="'.$invoiceLink.'" class="user-toolbar-button button-invoice">Invoice</button>':'')
+						'<button class="user-toolbar-button button-quote" link="'.$quoteLink.'">'.$this->_translator->translate('Quote').'</button>' .
+						($quote['status']==RCMS_Object_Quote_Quote::Q_STATUS_SOLD?'<button link="'.$invoiceLink.'" class="user-toolbar-button button-invoice">'.$this->_translator->translate('Invoice').'</button>':'')
 					));
 				}
 			}
@@ -307,7 +313,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 						$cart['ref_type'].' '.$cart['ref_id'],
 						$cart['date'],
 						'',
-						'<button link="'.$pdfLink.'" class="user-toolbar-button button-invoice">Invoice</button>'
+						'<button link="'.$pdfLink.'" class="user-toolbar-button button-invoice">'.$this->_translator->translate('Invoice').'</button>'
 					));
 				}
 			}
