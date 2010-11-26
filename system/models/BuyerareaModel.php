@@ -42,7 +42,8 @@ class BuyerareaModel extends Zend_Db_Table_Abstract {
     public function selectAllBuyers() {
         $sql = $this->getAdapter()->select()->from(array('buyer'=>$this->_userDataTable),array('id'))
                 ->joinLeft(array('user'=>$this->_userTable),'user.id = buyer.user_id',array('login','email','nickname','reg_date','role_id'))
-                ->joinLeft(array('act'=>$this->_userHistoryTable),'act.user_id = buyer.user_id', array('action'=>'ref_type','action_id'=>'ref_id','action_date'=>'date'))->group('buyer.user_id');
+                ->joinLeft(array('act'=>$this->_userHistoryTable),'act.user_id = buyer.user_id', array('action'=>'ref_type','action_id'=>'ref_id','action_date'=>'date'))->group('buyer.user_id')
+				->order('action_date DESC');
         return $this->getAdapter()->fetchAssoc($sql);
     }
 
