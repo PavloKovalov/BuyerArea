@@ -65,4 +65,12 @@ class Buyer extends RCMS_Object_User_User {
         return false;
     }
 
+	public function delete(){
+		if ( parent::delete() ) {
+			return $this->_buyerModel->deleteBuyer($this->getId());
+		} else {
+			return false;
+		}
+	}
+
 }

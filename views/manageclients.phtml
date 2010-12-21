@@ -25,7 +25,31 @@
                     modal: false,
                     buttons: {
                         "<?php echo $this->translate('Save'); ?>": function(){
-                            $(this).dialog( "close" );
+							var info = new Object;
+							$('#userinfo-form :input').each(function(){
+								info[ $(this).attr("name") ] = $(this).val() ;
+							});
+							
+							$.ajax({
+								url: '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=updclient',
+								type: 'POST',
+								dataType: 'json',
+								data: {info: info},
+								success: function( responce ) {
+									if (responce.done) {
+										var widget = $('<div class="ui-widget" />').css({'width': '50%'});
+										$('<div class="ui-state-highlight ui-corner-all"></div>')
+										.css({'padding': '2px 4px'})
+										.prepend( 
+											$('<p>')
+											.text('<?php echo $this->translate('User updated'); ?>')
+											.prepend('<span style="float: left; margin-right: 0.3em;" class="ui-icon ui-icon-info"/>')
+										).appendTo(widget)
+										$(widget).appendTo($('#dialog-userinfo').parent().children(':last') );
+										window.setTimeout(function(){ $(widget).remove() }, '5000');
+									}
+								}
+							})
                         },
                         "<?php echo $this->translate('Cancel'); ?>": function(){
                             $(this).dialog( "close" );
@@ -161,10 +185,15 @@
                         buttons: {
                             "<?php echo $this->translate('Delete this client'); ?>": function() {
                                 $.post(
-                                    '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=remclient',
+                                    '<?php echo $this->websiteUrl;?>plugin/buyerarea?run=delclient',
                                     {id: id},
                                     function(responce){
-                                        if (responce.done) { $( this ).dialog( "close" ); }
+                                        if (responce.done) {
+											$( "#dialog-delete" ).dialog( 'close' );
+											window.location.reload();
+										} else {
+											alert("Can't remove this client");
+										}
                                     },
                                     'json'
                                 );
@@ -241,7 +270,7 @@
                 <!--userinfo dialog for admin area-->
                 <div id="dialog-userinfo" title="User details">
                     <form action="javascript:;"  name="userinfo" id="userinfo-form">
-						<input type="hidden" id="dialog-userinfo-userid" value=""/>
+						<input type="hidden" id="dialog-userinfo-userid" name="userinfo-userid" value=""/>
                         <fieldset title="billing-address" >
                             <div class="ui-widget-header ui-corner-top"><?php echo $this->translate('Billing Address'); ?>:</div>
                             <div class="ui-widget-content ui-corner-bottom">

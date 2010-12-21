@@ -33,6 +33,14 @@ class BuyerModel extends Zend_Db_Table_Abstract {
         return $this->getAdapter()->fetchRow($sql, null, Zend_Db::FETCH_ASSOC);
     }
 
+	public function deleteBuyer($id) {
+		$where = $this->getAdapter()->quoteInto('user_id = ? ', $id);
+		// cleaning buyer history
+		$this->getAdapter()->delete($this->_userHistoryTable, $where);
+		// removing buyer
+		return $this->getAdapter()->delete($this->_userDataTable, $where);
+	}
+
     public function insertPayment($userId, $payment){
         $data = array(
             'user_id'  => (int) $userId,

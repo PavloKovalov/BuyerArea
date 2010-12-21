@@ -61,7 +61,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
                 if ($user->getBuyerId()) {
                     $this->_view->billingAddress = $user->getBillingAddress();
                     $this->_view->shippingAddress = $user->getShippingAddress();
-					return $this->_view->render('attachtocpanel.phtml');
+					return $this->_view->render('userinfo.phtml');
                 }
                 break;
             default :
@@ -93,7 +93,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $user = new Buyer();
         $user->setEmail($billingData['email']);
         $user->setLogin($billingData['email']);
-        $user->setRoleId(RCMS_Object_User_User::USER_ROLE_USER);
+        $user->setRoleId(RCMS_Object_User_User::USER_ROLE_MEMBER);
         $user->setStatus('active');
         $user->setIdSeosambaUser('0');
         if (!isset($billingData['firstname']) && !isset ($billingData['lastname']) && isset($billingData['name'])) {
@@ -323,23 +323,6 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 		echo json_encode(array('done'=>'false'));
 	}
 
-    private function getusercarts(){
-        if ( $id = $_REQUEST['id'] ) {
-            $this->_view->carts = $this->_model->selectAllUserCartsByUserId((int)$id);
-            echo $this->_view->render('viewusercarts.phtml');
-            return true;
-        }
-        return false;
-    }
-    private function getuserquotes(){
-        if ( $id = $_REQUEST['id'] ) {
-            $this->_view->quotes = $this->_model->selectAllUserQuotesByUserId((int)$id);
-            echo $this->_view->render('viewuserquotes.phtml');
-            return true;
-        }
-        return false;
-    }
-
 	/**
 	 * Method returns an html of settings screen (AJAX)
 	 */
@@ -352,5 +335,69 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $this->_view->settings = $this->_model->selectSettings();
         echo $this->_view->render('settings.phtml');
     }
+
+	/**
+	 * Method removes client (AJAX)
+	 */
+	private function delclient(){
+		if (isset($_POST['id'])) {
+			$buyerId = (int)$_POST['id'];
+			$id = $this->_model->getUserIdByBuyerId( $buyerId );
+			$user = new Buyer($id);
+			if ( $user->getBuyerId() == $buyerId ) {
+				if ( $user->delete() ) {
+					echo json_encode(array('done'=>true));
+					return true;
+				}
+			}
+		}
+		echo json_encode(array('done' => false));
+		}
+
+	/**
+	 * Method updates client info (AJAX)
+	 */
+	private function updclient() {
+		if (isset($_POST['info'])) {
+			$info = RCMS_Tools_Tools::stripSlashesIfQuotesOn($_POST['info']);
+			if ($info) {
+				$userId = $this->_model->getUserIdByBuyerId( (int)$info['userinfo-userid'] );
+				$billingAddress = array(
+					'firstname' => $info['billing-address-firstname'],
+					'lastname' => $info['billing-address-lastname'],
+					'email' => $info['billing-address-email'],
+					'phone' => $info['billing-address-phone'],
+					'country' => $info['billing-address-country'],
+					'city' => $info['billing-address-city'],
+					'state' => $info['billing-address-state'],
+					'zip' => $info['billing-address-zip']
+				);
+				$shippingAddress = array(
+					'firstname' => $info['shipping-address-firstname'],
+					'lastname' => $info['shipping-address-lastname'],
+					'email' => $info['shipping-address-email'],
+					'phone' => $info['shipping-address-phone'],
+					'country' => $info['shipping-address-country'],
+					'city' => $info['shipping-address-city'],
+					'state' => $info['shipping-address-state'],
+					'zip' => $info['shipping-address-zip']
+				);
+				$billingAddress = preg_replace('/^null$/i', '', $billingAddress);
+				$shippingAddress = preg_replace('/^null$/i', '', $shippingAddress);
+				$user = new Buyer($userId);
+				if ( $user->getBuyerId() == $info['userinfo-userid'] ) {
+					$user->setBillingAddress($billingAddress);
+					$user->setShippingAddress($shippingAddress);
+					if ( $user->save() ) {
+						echo json_encode( array('done'=>true) );
+						return true;
+					}
+				}
+			}
+		}
+		
+		echo json_encode(array('done' => false));
+		return false;
+	}
 
 }
