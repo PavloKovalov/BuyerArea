@@ -2,6 +2,16 @@
     margin: 0;
     padding: 0;
 }
+.buyerarea {
+    font-family: arial, serif;
+    font-size: 14px;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
 #buyerarea_main {
     font-family: arial, serif;
     font-size: 14px;
@@ -53,6 +63,14 @@ table {
 
 }
 /*** Table header ***/
+.buyers-table-search {
+	position: fixed;
+	top: 0;
+	right: 0;
+	padding: 10px;
+	margin-right: 25px;
+}
+.DataTables_sort_wrapper { /*float: none*/}
 .DataTables_sort_wrapper .css_right {
     float: right;
 }
@@ -115,4 +133,11 @@ table {
 #userinfo-form input,
 #userinfo-form select {
     width: 120px;
+}
+
+/*** import csv ***/
+#buyerarea_import form#importcsv {
+	margin: 5px;
+	text-align: center;
+	display: none;
 }

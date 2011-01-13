@@ -165,8 +165,18 @@
 //                });
 				$('.button-invoice').live('click',function(){
 					var url = $(this).attr('link');
-					url = url.replace('{cid}', prompt('<?php echo $this->translate('Input invoice ID (only digits)'); ?>:'));
-					url = url.replace('{pm}', prompt('<?php echo $this->translate('Payment method'); ?>:'));
+					var cid = prompt('<?php echo $this->translate('Input invoice ID (only digits)'); ?>:')
+					if (cid) {
+						url = url.replace('{cid}', cid);
+					} else {
+						return false;
+					}
+					var pm = prompt('<?php echo $this->translate('Payment method'); ?>:');
+					if (pm) {
+						url = url.replace('{pm}', pm);
+					} else {
+						url = url.replace('{pm}', '');
+					}
 					window.location.href=url;
 				});
 				$('.button-quote').live('click',function(){
@@ -207,27 +217,74 @@
 				$('#button-settings').button({icons: {primary: "ui-icon-gear"}}).live('click', function(){
 					$('#dialog-settings').dialog({
 						modal: true,
+						width: 500,
+						height: 400,
+						resizable: false,
 						open: function(){
 							$(this).load('<?php echo $this->websiteUrl;?>plugin/buyerarea?run=settings');
+						},
+						buttons: {
+							"<?php echo $this->translate('Save settings'); ?>": function(){
+								$.post(
+									'<?php echo $this->websiteUrl;?>plugin/buyerarea?run=settings'
+									,{settings:
+											{ email : $(this).find('textarea#email-template').val() }
+									}
+									,function(responce){
+										if (responce.done){ 
+											$('#status-done').show();
+										} else {
+											$('#status-error').show();
+										}
+									},
+									'json'
+								)
+							}
+						}
+					})
+				});
+				$('#button-import').button({icons: {primary: "ui-icon-circle-arrow-n"}}).live('click', function(){
+					$('#dialog-import').dialog({
+						modal: true,
+						resizable: false,
+						draggable: false,
+						width: 400,
+						open: function(){
+							$(this).load('<?php echo $this->websiteUrl;?>plugin/buyerarea?run=uploadForm')
 						}
 					})
 				});
                 $('.user-toolbar-button').button("option", "text", false)//.parent().buttonset();
-
-                buyersTable = $('#buyerarea_buyers').dataTable({
+				
+				buyersTable = $('#buyerarea_buyers').dataTable({
                     "bJQueryUI": true,
-                    "bAutoWidth": false,
-                    "iDisplayLength": 20,
+					"bAutoWidth": false,
                     "bLengthChange": false,
-                    "sDom": '<"ui-widget-header ui-helper-clearfix"f>t<"bottom-toolbar ui-widget-header"ip>',
-                    "sPaginationType": "full_numbers",
-//                    "bPaginate": false,
-//                    "sScrollY": "90%",
+                    "sDom": '<"buyers-table-search"f>t',
+                    "bPaginate": false,
+                    "sScrollY": "99%",
                     "aoColumnDefs": [
-                        { "bSortable": false, "aTargets": [ -1 ] }
+                        { "bSortable": false, "aTargets": [ -1 ] }//,
+//                        { "sWidth": '70px', "aTargets": [ -1 ] },
+//                        { "sWidth": '35px', "aTargets": [ 0 ] },
+//                        { "sWidth": '25%', "aTargets": [ 1, 2 ] },
+//                        { "sWidth": '20%', "aTargets": [ 3, 4 ] }
                     ]
                 });
 
+				$('fieldset').delegate('select[name$="country"]', 'change', function(){
+					var states = $(this).closest('div').find('select[name$="state"]');
+					states.html(loadStates($(this).val()));
+					if (!states.html().length){
+						states.attr('disabled', true);
+					} else {
+						states.removeAttr('disabled');
+					}
+				})
+
+				$('body').delegate(':ui-dialog', 'dialogbeforeclose', function(event, ui){
+					$('div.ui-widget-overlay').css({zIndex: 0});
+				});
             });
 
             function loadStates(country) {
@@ -254,11 +311,14 @@
     <body>
         <div id="buyerarea_main" class="ui-dialog" style="padding: 0">
 			<div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix">
-				<span class="ui-dialog-title"><?php echo $this->translate('Manage clients'); ?></span>
-<!--				<button class="user-toolbar-button" id="button-settings" >Settings</button>-->
+				<span class="ui-dialog-title" style="font-size: 20px"><?php echo $this->translate('Manage clients'); ?></span>
+				<button class="" id="button-settings" ><?php echo $this->translate('Settings'); ?></button>
+				<button class="" id="button-import" ><?php echo $this->translate('Import CSV'); ?></button>
 				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
 			</div>
             <div id="dialogs-container" style="display: none">
+				<div id="dialog-import" title="<?php echo $this->translate('Import CSV'); ?>">
+				</div>
 				<div id="dialog-settings" title="<?php echo $this->translate('Settings'); ?>">
 				</div>
                 <div id="dialog-delete" title="<?php echo $this->translate('Delete client'); ?>">
@@ -276,8 +336,10 @@
                             <div class="ui-widget-content ui-corner-bottom">
                                 <p><label for="billing-address-firstname"><?php echo $this->translate('Firstname'); ?>:</label><input type="text" name="billing-address-firstname" value="" /></p>
                                 <p><label for="billing-address-lastname"><?php echo $this->translate('Lastname'); ?>:</label><input type="text" name="billing-address-lastname" value="" /></p>
+                                <p><label for="billing-address-company"><?php echo $this->translate('Company'); ?>:</label><input type="text" name="billing-address-company" value="" /></p>
                                 <p><label for="billing-address-email">E-mail:</label><input type="text" name="billing-address-email" value="" /></p>
                                 <p><label for="billing-address-phone"><?php echo $this->translate('Phone'); ?>:</label><input type="text" name="billing-address-phone" value="" /></p>
+                                <p><label for="billing-address-mobile"><?php echo $this->translate('Mobile'); ?>:</label><input type="text" name="billing-address-mobile" value="" /></p>
                                 <p><label for="billing-address-country"><?php echo $this->translate('Country'); ?>:</label>
                                     <?php echo $this->formSelect('billing-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
                                 </p>
@@ -285,6 +347,8 @@
                                 <p><label for="billing-address-state"><?php echo $this->translate('State'); ?>:</label>
                                     <?php echo $this->formSelect('billing-address-state'); ?></p>
                                 <p><label for="billing-address-zip"><?php echo $this->translate('Zip'); ?>:</label><input type="text" name="billing-address-zip" value="" /></p>
+                                <p><label for="billing-address-address1"><?php echo $this->translate('Address'); ?>:</label><input type="text" name="billing-address-address1" value="" /></p>
+                                <p><label for="billing-address-address2"><?php echo $this->translate('Address').' 2'; ?>:</label><input type="text" name="billing-address-address2" value="" /></p>
                             </div>
                         </fieldset>
                         <fieldset title="shipping-address" >
@@ -292,8 +356,10 @@
                             <div class="ui-widget-content ui-corner-bottom">
                                 <p><label for="shipping-address-firstname"><?php echo $this->translate('Firstname'); ?>:</label><input type="text" name="shipping-address-firstname" value="" /></p>
                                 <p><label for="shipping-address-lastname"><?php echo $this->translate('Lastname'); ?>:</label><input type="text" name="shipping-address-lastname" value="" /></p>
+                                <p><label for="shipping-address-company"><?php echo $this->translate('Company'); ?>:</label><input type="text" name="shipping-address-company" value="" /></p>
                                 <p><label for="shipping-address-email">E-mail:</label><input type="text" name="shipping-address-email" value="" /></p>
                                 <p><label for="shipping-address-phone"><?php echo $this->translate('Phone'); ?>:</label><input type="text" name="shipping-address-phone" value="" /></p>
+                                <p><label for="shipping-address-mobile"><?php echo $this->translate('Mobile'); ?>:</label><input type="text" name="shipping-address-mobile" value="" /></p>
                                 <p><label for="shipping-address-country"><?php echo $this->translate('Country'); ?>:</label>
                                     <?php echo $this->formSelect('shipping-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
                                 </p>
@@ -301,6 +367,8 @@
                                 <p><label for="shipping-address-state"><?php echo $this->translate('State'); ?>:</label>
                                     <?php echo $this->formSelect('shipping-address-state'); ?></p>
                                 <p><label for="shipping-address-zip"><?php echo $this->translate('Zip'); ?>:</label><input type="text" name="shipping-address-zip" value="" /></p>
+                                <p><label for="shipping-address-address1"><?php echo $this->translate('Address'); ?>:</label><input type="text" name="shipping-address-address1" value="" /></p>
+                                <p><label for="shipping-address-address2"><?php echo $this->translate('Address').' 2'; ?>:</label><input type="text" name="shipping-address-address2" value="" /></p>
                             </div>
                         </fieldset>
                     </form>
@@ -332,9 +400,9 @@
 
             </div>
 
-            <div id="buyerarea_manageclients">
+            <div id="buyerarea_manageclients" style="position: relative; height: 90%">
                 <?php if ($this->buyers) : ?>
-                <table class="buyerarea_buyertable" id="buyerarea_buyers" width="100%">
+                <table class="buyerarea_buyertable" id="buyerarea_buyers" width="99%">
                     <thead>
                         <tr>
                             <th>#</th>

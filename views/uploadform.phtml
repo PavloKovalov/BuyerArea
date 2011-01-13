@@ -1,0 +1,38 @@
+<div id="buyerarea_import">
+	<div class="ui-state-error ui-corner-all" style="padding: 5px">
+		<p style="line-height: 20px">
+
+			<span class="ui-icon ui-icon-alert" style="float: left; vertical-align: middle"/>
+			<span style="text-align: justify;">Warning! This function still under development and may cause some damage to your system! Use it on your own risk if you sure that you need to use it!</span>
+			
+		</p>
+		<p>
+			<span>To continue, type <b>'OK'</b> in next field: <input style="width: 30px" type="text" id="ok_to_continue" /></span>
+		</p>
+	</div>
+	<form name="importcsv" id="importcsv" action="<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=uploadcsv" enctype="multipart/form-data" method="post">
+		<input type="file" name="file" />
+	</form>
+</div>
+<script type="text/javascript">
+	$(
+		$('#ok_to_continue').keyup(function(){
+			if ($(this).val() === 'OK' ) {
+				$('#importcsv').slideDown();
+				$(this).closest(':ui-dialog').dialog( "option", "buttons",
+					{
+						"<?php echo $this->translate('Import'); ?>" : function(){
+							$(this).find('form#importcsv').submit();
+							$(this).dialog( 'close' );
+						}
+					}
+				);
+			} else {
+				$('#importcsv').slideUp();
+				$(this).closest(':ui-dialog').dialog( "option", "buttons", {} );
+			}
+
+			
+		})
+	);
+</script>

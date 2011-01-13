@@ -15,14 +15,16 @@ class Buyerarea implements RCMS_Core_PluginInterface {
     private $_model         = null;
     private $_view          = null;
     private $_request       = null;
+    private $_responce      = null;
 	private $_translator	= null;
     private $_websiteUrl    = '';
     private $_session       = null;
     private $_loggedUser    = null;
     private $_isAdminLogged = false;
     private $_options;
+	private $_sitePath;
 
-    public function __construct($options, $data) {
+	public function __construct($options, $data) {
         $this->_model = new BuyerareaModel();
         $this->_view  = new Zend_View();
         $this->_view->setScriptPath(dirname(realpath(__FILE__)) . '/views');
@@ -48,6 +50,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			$this->_isAdminLogged = ($this->_loggedUser->getRoleId() == '1' || $this->_loggedUser->getRoleId() == '3')?true:false;
 		}
         $this->_view->websiteUrl = $this->_websiteUrl;
+
+		$this->_sitePath = unserialize(Zend_Registry::get('config'))->website->website->path;
+
+		$this->_responce = new Zend_Controller_Response_Http();
     }
 
     public function run($requestParams = array()) {
@@ -88,7 +94,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
      * @param array $payment - optional array: 'type' - quote or cart, 'id' - number
      * @return <type> - id of created user
      */
-    public function createUser($billingData = array(), $shippingData = null, $payment = null) {
+    public function createUser($billingData = array(), $shippingData = null, $payment = null, $notifyWithEmail = true) {
+		$settings = $this->_model->selectSettings();
         $billingData['password'] = self::generatePassword(10, true);
         $user = new Buyer();
         $user->setEmail($billingData['email']);
@@ -117,10 +124,13 @@ class Buyerarea implements RCMS_Core_PluginInterface {
             'company'   =>  $billingData['company'],
             'email'     =>  $billingData['email'],
             'phone'     =>  $billingData['phone'],
+            'mobile'    =>  $billingData['mobile'],
             'country'   =>  $billingData['country'],
             'city'      =>  $billingData['city'],
             'state'     =>  $billingData['state'],
-            'zip'       =>  $billingData['zip']
+            'zip'       =>  $billingData['zip'],
+            'address1'  =>  $billingData['address1'],
+            'address2'  =>  $billingData['address2']
         );
         if ( $shippingData ) {
             $shippingAddress = array(
@@ -129,19 +139,29 @@ class Buyerarea implements RCMS_Core_PluginInterface {
                 'company'   =>  $shippingData['company'],
                 'email'     =>  $shippingData['email'],
                 'phone'     =>  $shippingData['phone'],
+                'mobile'    =>  $shippingData['mobile'],
                 'country'   =>  $shippingData['country'],
                 'city'      =>  $shippingData['city'],
                 'state'     =>  $shippingData['state'],
-                'zip'       =>  $shippingData['zip']
+                'zip'       =>  $shippingData['zip'],
+				'address1'  =>  $shippingData['address1'],
+				'address2'  =>  $shippingData['address2']
             );
         }
         $user->setBillingAddress($billingAddress);
         $user->setShippingAddress($shippingAddress);
         
         if ($user->save()){
-            $result = $this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, '<b>'.$billingData['password'].'</b>');
-			if (!$result) {
-				error_log('Error sending email to '.$billingAddress['email']);
+			if ($notifyWithEmail) {
+				$emailBody = $settings['email'];
+				$emailBody = preg_replace(array('~{websiteurl}~','~{login}~','~{password}~i'), array($this->_websiteUrl,$user->getLogin(),$billingData['password']), $emailBody);
+				error_log($emailBody);
+				$result = $this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, $emailBody);
+				if (!$result) {
+					error_log('Error sending email to '.$billingAddress['email']);
+				}
+			} else {
+				return array('id' => $user->getId(), 'pwd' => $billingData['password']);
 			}
         }
 
@@ -331,6 +351,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
             foreach ($_POST['settings'] as $key => $value){
                 $this->_model->updateSettings($key, $value);
             }
+			echo json_encode(array('done'=>true));
+			return true;
         }
         $this->_view->settings = $this->_model->selectSettings();
         echo $this->_view->render('settings.phtml');
@@ -365,22 +387,30 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 				$billingAddress = array(
 					'firstname' => $info['billing-address-firstname'],
 					'lastname' => $info['billing-address-lastname'],
+					'company' => $info['billing-address-company'],
 					'email' => $info['billing-address-email'],
 					'phone' => $info['billing-address-phone'],
+					'mobile' => $info['billing-address-mobile'],
 					'country' => $info['billing-address-country'],
 					'city' => $info['billing-address-city'],
 					'state' => $info['billing-address-state'],
-					'zip' => $info['billing-address-zip']
+					'zip' => $info['billing-address-zip'],
+					'address1' => $info['billing-address-address1'],
+					'address2' => $info['billing-address-address2']
 				);
 				$shippingAddress = array(
 					'firstname' => $info['shipping-address-firstname'],
 					'lastname' => $info['shipping-address-lastname'],
+					'company' => $info['shipping-address-company'],
 					'email' => $info['shipping-address-email'],
 					'phone' => $info['shipping-address-phone'],
+					'mobile' => $info['shipping-address-mobile'],
 					'country' => $info['shipping-address-country'],
 					'city' => $info['shipping-address-city'],
 					'state' => $info['shipping-address-state'],
-					'zip' => $info['shipping-address-zip']
+					'zip' => $info['shipping-address-zip'],
+					'address1' => $info['shipping-address-address1'],
+					'address2' => $info['shipping-address-address2']
 				);
 				$billingAddress = preg_replace('/^null$/i', '', $billingAddress);
 				$shippingAddress = preg_replace('/^null$/i', '', $shippingAddress);
@@ -398,6 +428,85 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 		
 		echo json_encode(array('done' => false));
 		return false;
+	}
+
+	private function uploadForm(){
+		echo $this->_view->render('uploadform.phtml');
+		return true;
+	}
+
+	private function uploadcsv(){
+		$adapter = new Zend_File_Transfer_Adapter_Http();
+		$adapter->addValidator('Extension', false, 'csv,txt');
+		$adapter->setDestination($this->_sitePath.'tmp');
+		if (!$adapter->receive()){
+			$messages = $adapter->getMessages();
+			echo implode("\n", $messages);
+		} else {
+			$filename = $adapter->getFileName();
+
+			if ( ($handle = fopen($filename, 'r')) !== false) {
+				$data = array();
+				while ($row = fgetcsv($handle)) {
+					array_push($data, $row);
+				}
+			}
+			fclose($handle);
+			
+			$keys = array_shift($data);
+
+			$rndName = self::generatePassword(8, false);
+			$outputFilename = $this->_sitePath.'tmp/'.$rndName.'.tmp';
+			$handle = fopen($outputFilename, 'w');
+			foreach ($data as &$row) {
+			   $row = preg_replace('/^null/i', '', array_combine($keys, $row));
+
+			   if (isset($row['email'])&&!empty($row['email'])) {
+				   $userData = $this->createUser(
+					   array(
+							'firstname' =>  $row['firstname'],
+							'lastname'  =>  $row['lastname'],
+							'company'   =>  $row['company'],
+							'email'     =>  $row['email'],
+							'phone'     =>  $row['phone'],
+							'country'   =>  $row['country'],
+							'city'      =>  $row['city'],
+							'state'     =>  $row['state'],
+							'zip'       =>  $row['zip'],
+							'address1'  =>  $row['address1'],
+							'address2'  =>  $row['address2']
+						)
+					   , array(
+							'firstname' =>  $row['shipping_firstname'],
+							'lastname'  =>  $row['shipping_lastname'],
+							'company'   =>  $row['shipping_company'],
+							'email'     =>  $row['shipping_email'],
+							'phone'     =>  $row['shipping_phone'],
+							'country'   =>  $row['shipping_country'],
+							'city'      =>  $row['shipping_city'],
+							'state'     =>  $row['shipping_state'],
+							'zip'       =>  $row['shipping_zip'],
+							'address1'  =>  $row['shipping_address1'],
+							'address2'  =>  $row['shipping_address2']
+						)
+					   , null, false);
+				   if (is_array($userData)){
+					fputcsv($handle, array('id'=>$userData['id'],'email'=>$row['email'], 'password'=>$userData['pwd']));
+				   }
+			   }
+			}
+			fclose($handle);
+			
+			$this->_responce->clearAllHeaders()
+				->setBody($file)
+				->setHeader('Content-type', 'application/force-download')
+				->setHeader('Content-Disposition', 'attachment; filename="'.$rndName.'.csv"')
+				->sendHeaders();
+			readfile($outputFilename);
+			$this->_responce->sendResponse();
+			
+			RCMS_Tools_FilesystemTools::deleteFile($outputFilename);
+		}
 	}
 
 }
