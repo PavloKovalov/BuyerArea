@@ -6,6 +6,8 @@
  *
  * @author Pavel Kovalyov
  * @see http://www.seotoaster.com/
+ * @TODO : proper dispatcher
+ * @TODO : rename actions and functions
  */
 define('BAPLUGINPATH', dirname(realpath(__FILE__)));
 require_once dirname(realpath(__FILE__)).'/system/models/BuyerareaModel.php';
@@ -54,6 +56,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 		$this->_sitePath = unserialize(Zend_Registry::get('config'))->website->website->path;
 
 		$this->_responce = new Zend_Controller_Response_Http();
+		$this->_request  = new Zend_Controller_Request_Http();
     }
 
     public function run($requestParams = array()) {
@@ -70,21 +73,33 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 					return $this->_view->render('userinfo.phtml');
                 }
                 break;
+			case 'loginform':
+				if ($this->_loggedUser) {
+					return $this->_view->render('clientlogout.phtml');
+				} else {
+					return $this->_view->render('clientlogin.phtml');
+				}
+				break;
             default :
 				break;
         }
+		//login for clients
+		if (isset($requestParams['run']) && $requestParams['run']=='clientLogin'){
+			$this->clientLogin();
+		} 
 		// I'll die if some stranger come
 		if (!$this->_isAdminLogged){
 			echo ('<script>window.location.href="'.$this->_websiteUrl.'";</script>');
 			die();
+		} else {
+			// I'll open my secrets to known person
+			if (isset($requestParams['run']) && !empty($requestParams['run'])){
+				$method = $requestParams['run'];
+				if (in_array($method, get_class_methods(__CLASS__))){
+					$this->$method();
+				}
+			}
 		}
-		// I'll open my secrets to known person
-        if (isset($requestParams['run']) && !empty($requestParams['run'])){
-            $method = $requestParams['run'];
-            if (in_array($method, get_class_methods(__CLASS__))){
-                $this->$method();
-            }
-        }
     }
 
     /**
@@ -154,11 +169,16 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         if ($user->save()){
 			if ($notifyWithEmail) {
 				$emailBody = $settings['email'];
+				$emailBody = strip_tags($settings['email'], '<p><a><b><br>');
 				$emailBody = preg_replace(array('~{websiteurl}~','~{login}~','~{password}~i'), array($this->_websiteUrl,$user->getLogin(),$billingData['password']), $emailBody);
-				error_log($emailBody);
-				$result = $this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, $emailBody);
-				if (!$result) {
-					error_log('Error sending email to '.$billingAddress['email']);
+				$emailBody = nl2br($emailBody);
+				
+				try {
+					$this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, $emailBody);
+				} catch (Exception $e) {
+					error_log('[SEOTOASTER] [BuyerArea plugin] Mailer error - '.$e->getMessage());
+					error_log($e->getTraceAsString());
+					error_log('[SEOTOASTER] [BuyerArea plugin] - Error sending email to '.$billingAddress['email']);
 				}
 			} else {
 				return array('id' => $user->getId(), 'pwd' => $billingData['password']);
@@ -464,30 +484,30 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			   if (isset($row['email'])&&!empty($row['email'])) {
 				   $userData = $this->createUser(
 					   array(
-							'firstname' =>  $row['firstname'],
-							'lastname'  =>  $row['lastname'],
-							'company'   =>  $row['company'],
-							'email'     =>  $row['email'],
-							'phone'     =>  $row['phone'],
-							'country'   =>  $row['country'],
-							'city'      =>  $row['city'],
-							'state'     =>  $row['state'],
-							'zip'       =>  $row['zip'],
-							'address1'  =>  $row['address1'],
-							'address2'  =>  $row['address2']
+							'firstname' =>  $row['billing-firstname'],
+							'lastname'  =>  $row['billing-lastname'],
+							'company'   =>  $row['billing-company'],
+							'email'     =>  $row['billing-email'],
+							'phone'     =>  $row['billing-phone'],
+							'country'   =>  $row['billing-country'],
+							'city'      =>  $row['billing-city'],
+							'state'     =>  $row['billing-state'],
+							'zip'       =>  $row['billing-zip'],
+							'address1'  =>  $row['billing-address1'],
+							'address2'  =>  $row['billing-address2']
 						)
 					   , array(
-							'firstname' =>  $row['shipping_firstname'],
-							'lastname'  =>  $row['shipping_lastname'],
-							'company'   =>  $row['shipping_company'],
-							'email'     =>  $row['shipping_email'],
-							'phone'     =>  $row['shipping_phone'],
-							'country'   =>  $row['shipping_country'],
-							'city'      =>  $row['shipping_city'],
-							'state'     =>  $row['shipping_state'],
-							'zip'       =>  $row['shipping_zip'],
-							'address1'  =>  $row['shipping_address1'],
-							'address2'  =>  $row['shipping_address2']
+							'firstname' =>  $row['shipping-firstname'],
+							'lastname'  =>  $row['shipping-lastname'],
+							'company'   =>  $row['shipping-company'],
+							'email'     =>  $row['shipping-email'],
+							'phone'     =>  $row['shipping-phone'],
+							'country'   =>  $row['shipping-country'],
+							'city'      =>  $row['shipping-city'],
+							'state'     =>  $row['shipping-state'],
+							'zip'       =>  $row['shipping-zip'],
+							'address1'  =>  $row['shipping-address1'],
+							'address2'  =>  $row['shipping-address2']
 						)
 					   , null, false);
 				   if (is_array($userData)){
@@ -507,6 +527,38 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			
 			RCMS_Tools_FilesystemTools::deleteFile($outputFilename);
 		}
+	}
+
+	private function clientLogin(){
+		if ($this->_request->isPost()){
+			$memberLoginModel = new LoginModel;
+			$login		= $this->_request->getParam('clientLoginName');
+			$password	= $this->_request->getParam('clientPassword');
+			$client = $memberLoginModel->selectUserIdByLoginPass($login, $password);
+			if ($client && is_object($client)){
+				if ($client->role_id == RCMS_Object_User_User::USER_ROLE_MEMBER){
+					$user = new RCMS_Object_User_User($client->id);
+					$user->setLastLogin(date("Y-m-d H:i:s", time()));
+					$user->save();
+					$this->_session->memberLogged = true;
+					$this->_session->memberLogin  = $client->login;
+					$this->_session->memberEmail  = $client->email;
+					$this->_session->memberNick   = $client->nickname;
+					$this->_session->currentUser  = serialize($user);
+					$buyerData = $this->_model->selectBuyer($user->getId());
+					if ($buyerData && !empty ($buyerData['shipping_address'])) {
+						$shipping = new RCMS_Object_Shipping_Shipping();
+						$shipping->setShippingAddress(unserialize($buyerData['shipping_address']));
+					}
+					$pageToRedirect = $_SERVER['HTTP_REFERER'];
+					$memberLandingPageData = $memberLoginModel->selectMemberLandingPage();
+					$pageToRedirect = (!empty($memberLandingPageData) && $memberLandingPageData['url']) ? $memberLandingPageData['url'] . '.html' : $pageToRedirect;
+					$this->_responce->setRedirect($pageToRedirect)->sendResponse();
+				}
+			}	
+		}
+
+		$this->_responce->setRedirect($_SERVER['HTTP_REFERER'])->sendResponse();
 	}
 
 }
