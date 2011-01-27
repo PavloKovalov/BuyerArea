@@ -6,7 +6,6 @@
  *
  * @author Pavel Kovalyov
  * @see http://www.seotoaster.com/
- * @TODO : proper dispatcher
  * @TODO : rename actions and functions
  */
 define('BAPLUGINPATH', dirname(realpath(__FILE__)));
@@ -310,7 +309,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * @return json
 	 */
     public function getbuyerinfo(){
-        if ( $id = $_POST['id'] ) {
+        if ( $id = $this->_request->getPost('id') ) {
             $data = $this->_model->selectUserInfoByUserId($id);
             if ($data){
                 $data['billing_address'] = unserialize($data['billing_address']);
@@ -327,12 +326,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * @return json
 	 */
 	private function getbuyerpayments(){
-		if ( $id = $_REQUEST['id'] ) {
+		if ( $id = $this->_request->getParam('id') ) {
 			$result = array();
 			$quotes = $this->_model->selectAllUserQuotesByUserId((int)$id);
-			//var_dump($quotes);
 			$carts = $this->_model->selectAllUserCartsByUserId((int)$id);
-			//var_dump($carts);
 			if ($quotes) {
 				foreach ($quotes as $quote) {
 					$quoteLink		= ''.$this->_websiteUrl.'sys/backend_quote/preview/qid/'.$quote['ref_id'].'.'. md5($quote['ref_id']).'.'.$quote['ref_id'];
@@ -367,12 +364,17 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * Method returns an html of settings screen (AJAX)
 	 */
     private function settings(){
-        if (isset($_POST['settings'])){
-            foreach ($_POST['settings'] as $key => $value){
-                $this->_model->updateSettings($key, $value);
-            }
-			echo json_encode(array('done'=>true));
-			return true;
+		if ($this->_request->isPost() && ($settings = $this->_request->getPost('settings')) ){
+			if (is_array($settings)) {
+				foreach ($settings as $key => $value){
+					$this->_model->updateSettings($key, $value);
+				}
+				echo json_encode(array('done'=>true));
+				return true;
+			} else {
+				echo json_encode(array('done'=>false));
+				return false;
+			}
         }
         $this->_view->settings = $this->_model->selectSettings();
         echo $this->_view->render('settings.phtml');
@@ -382,8 +384,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * Method removes client (AJAX)
 	 */
 	private function delclient(){
-		if (isset($_POST['id'])) {
-			$buyerId = (int)$_POST['id'];
+		if ($this->_request->isPost() && ($buyerId = $this->_request->getParam('id')) ) {
 			$id = $this->_model->getUserIdByBuyerId( $buyerId );
 			$user = new Buyer($id);
 			if ( $user->getBuyerId() == $buyerId ) {
@@ -400,8 +401,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 	 * Method updates client info (AJAX)
 	 */
 	private function updclient() {
-		if (isset($_POST['info'])) {
-			$info = RCMS_Tools_Tools::stripSlashesIfQuotesOn($_POST['info']);
+		if ($this->_request->isPost()) {
+			$info = RCMS_Tools_Tools::stripSlashesIfQuotesOn( $this->_request->getParam('info')  );
 			if ($info) {
 				$userId = $this->_model->getUserIdByBuyerId( (int)$info['userinfo-userid'] );
 				$billingAddress = array(
@@ -463,6 +464,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			$messages = $adapter->getMessages();
 			echo implode("\n", $messages);
 		} else {
+			$shopSettings = $this->_model->selectShopConfig();
+
 			$filename = $adapter->getFileName();
 
 			if ( ($handle = fopen($filename, 'r')) !== false) {
@@ -478,10 +481,30 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			$rndName = self::generatePassword(8, false);
 			$outputFilename = $this->_sitePath.'tmp/'.$rndName.'.tmp';
 			$handle = fopen($outputFilename, 'w');
+			
+			$countyList = RCMS_Object_QuickConfig_QuickConfig::$worldCountries;
+
 			foreach ($data as &$row) {
 			   $row = preg_replace('/^null/i', '', array_combine($keys, $row));
 
-			   if (isset($row['email'])&&!empty($row['email'])) {
+			   if (isset($row['billing-email'])&&!empty($row['billing-email'])) {
+				   $row['billing-country'] = array_search($row['billing-country'], $countyList);
+				   $row['shipping-country'] = array_search($row['shipping-country'], $countyList);
+				   
+				   if ($row['billing-country'] == '') {
+					   $row['billing-country'] = $shopSettings['country'];
+					   if ($shopSettings['state'] != ''){
+						   $row['billing-state'] = $shopSettings['state'];
+					   }
+				   }
+				   if ($row['shipping-country'] == '') {
+					   $row['shipping-country'] = $shopSettings['country'];
+					   if ($shopSettings['state'] != ''){
+						   $row['shipping-state'] = $shopSettings['state'];
+					   }
+				   }
+				   
+
 				   $userData = $this->createUser(
 					   array(
 							'firstname' =>  $row['billing-firstname'],
@@ -507,18 +530,19 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 							'state'     =>  $row['shipping-state'],
 							'zip'       =>  $row['shipping-zip'],
 							'address1'  =>  $row['shipping-address1'],
-							'address2'  =>  $row['shipping-address2']
+							'address2'  =>  $row['shipping-address2'],
+							'mobile'	=>  $row['mobile'],
+							'instructions'  =>  $row['shipping-instructions']
 						)
 					   , null, false);
 				   if (is_array($userData)){
-					fputcsv($handle, array('id'=>$userData['id'],'email'=>$row['email'], 'password'=>$userData['pwd']));
+					fputcsv($handle, array('id'=>$userData['id'],'email'=>$row['billing-email'], 'password'=>$userData['pwd']));
 				   }
 			   }
 			}
 			fclose($handle);
-			
+
 			$this->_responce->clearAllHeaders()
-				->setBody($file)
 				->setHeader('Content-type', 'application/force-download')
 				->setHeader('Content-Disposition', 'attachment; filename="'.$rndName.'.csv"')
 				->sendHeaders();
@@ -559,6 +583,77 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 		}
 
 		$this->_responce->setRedirect($_SERVER['HTTP_REFERER'])->sendResponse();
+	}
+
+	private function clientList() {
+		if ($this->_request->isPost()) {
+			$params = $this->_request->getParams();
+			$totalRecords = $this->_model->getTotalBuyersCount();
+			$filtered = false;
+			// processing pagination
+			if (isset ($params['iDisplayStart'])) {
+				$limit = array('count'=>$params['iDisplayLength'],'offset'=>$params['iDisplayStart']);
+			}
+
+			if (isset ($params['iSortingCols']) && $params['iSortingCols']) {
+				$order = array();
+				for ($i = 0; $i <= --$params['iSortingCols']; $i++){
+					$order[$this->_colsNumToName($params['iSortCol_'.$i])] = $params['sSortDir_'.$i];
+				}
+			}
+
+			if (isset ($params['sSearch']) && !empty ($params['sSearch'])){
+				$conditions['search'] = $params['sSearch'];
+				$conditions['search_timestamp'] = Zend_Date::isDate($params['sSearch']) ? strtotime($params['sSearch']) : false;
+				$conditions['fields'] = array();
+				$cols = --$params['iColumns'];
+				for ($i = 0; $i < $cols; $i++ ){
+					if ( isset($params['bSearchable_'.$i]) && $params['bSearchable_'.$i] == true ){
+						array_push($conditions['fields'], $this->_colsNumToName($i));
+					}
+				}
+				$filtered = true;
+			}
+			$data = $this->_model->selectAllBuyers($conditions, $order, $limit);
+			$return = array();
+			foreach ($data as $row) {
+				array_push($return, array(
+					$row['id'],
+					$row['nickname'],
+					$row['email'],
+					date('d M Y H:i:s', strtotime($row['reg_date'])),
+					$row['action_id']?$row['action'].' #'.$row['action_id'].' on '.date('d M Y H:i:s', strtotime($row['action_date'])):'No activity',
+					'<button class="user-toolbar-button button-info" >User info</button><button class="user-toolbar-button button-delete" >Delete</button>'
+				) );
+			}
+			echo json_encode(array('sEcho'=>  intval($params['sEcho']), "iTotalRecords" => $totalRecords, 'iTotalDisplayRecords' => $filtered?count($return):$totalRecords, 'aaData' => $return));
+			return true;
+		}
+		echo ' ';
+		return false;
+	}
+
+	private function _colsNumToName($number){
+		$return = false;
+		switch ($number){
+			case 0:
+				$return = 'buyer.id';
+				break;
+			case 1:
+				$return = 'user.nickname';
+				break;
+			case 2:
+				$return = 'user.email';
+				break;
+			case 3:
+				$return = 'user.reg_date';
+				break;
+			case 4:
+				$return = 'act.ref_id';
+				break;
+		}
+
+		return $return;
 	}
 
 }

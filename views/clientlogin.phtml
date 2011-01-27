@@ -1,0 +1,7 @@
+<div id="buyerarea_login">
+	<form id="buyer-login" action="<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=clientLogin" method="POST">
+		<p><label for="client-login-inp"><?php echo $this->translate('Login');?></label><input id="client-login-inp" type="text" name="clientLoginName" value=""/></p>
+		<p><label for="client-pass-inp"><?php echo $this->translate('Password');?></label><input id="client-pass-inp" type="password" name="clientPassword" value=""/></p>
+		<p><input id="client-submit-btn" type="submit" name="clientSubmit" value="<?php echo $this->translate('Sign In');?>"/></p>
+	</form>
+</div>

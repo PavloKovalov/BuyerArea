@@ -1,12 +1,10 @@
-CREATE TABLE `buyerarea_settings` (
-	`name` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
-	`value` TEXT NOT NULL COLLATE 'utf8_unicode_ci'
-)
-COLLATE='utf8_unicode_ci'
-ENGINE=MyISAM
-ROW_FORMAT=DEFAULT
+CREATE TABLE IF NOT EXISTS `buyerarea_settings` (
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `value` text COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE='utf8_unicode_ci';
 /*~query~*/
-CREATE TABLE `buyerarea_userdata` (
+CREATE TABLE IF NOT EXISTS `buyerarea_userdata` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`user_id` INT(10) UNSIGNED NOT NULL,
 	`billing_address` TEXT NULL COLLATE 'utf8_unicode_ci',
@@ -16,9 +14,9 @@ CREATE TABLE `buyerarea_userdata` (
 COLLATE='utf8_unicode_ci'
 ENGINE=MyISAM
 ROW_FORMAT=DEFAULT
-AUTO_INCREMENT=1
+AUTO_INCREMENT=1;
 /*~query~*/
-CREATE TABLE `buyerarea_userhistory` (
+CREATE TABLE IF NOT EXISTS `buyerarea_userhistory` (
 	`user_id` INT(10) UNSIGNED NOT NULL,
 	`ref_type` ENUM('cart','quote') NOT NULL COLLATE 'utf8_unicode_ci',
 	`ref_id` INT(10) UNSIGNED NOT NULL,
@@ -26,4 +24,4 @@ CREATE TABLE `buyerarea_userhistory` (
 )
 COLLATE='utf8_unicode_ci'
 ENGINE=MyISAM
-ROW_FORMAT=DEFAULT
+ROW_FORMAT=DEFAULT;
