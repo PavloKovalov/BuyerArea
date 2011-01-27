@@ -186,6 +186,7 @@
 
                 $('.button-delete').button({icons: {primary: "ui-icon-trash"}}).live('click', function(){
                     $( "#dialog-delete:ui-dialog" ).dialog( "destroy" );
+					var rowId = $(this).closest('tr').index();
                     var id = $(this).closest('tr').find('td.buyer-id').text();
                     $( "#dialog-delete" ).dialog({
                         resizable: false,
@@ -200,7 +201,7 @@
                                     function(responce){
                                         if (responce.done) {
 											$( "#dialog-delete" ).dialog( 'close' );
-											window.location.reload();
+											buyersTable.fnDraw();
 										} else {
 											alert("Can't remove this client");
 										}
@@ -259,17 +260,37 @@
 				buyersTable = $('#buyerarea_buyers').dataTable({
                     "bJQueryUI": true,
 					"bAutoWidth": false,
-                    "bLengthChange": false,
-                    "sDom": '<"buyers-table-search"f>t',
-                    "bPaginate": false,
-                    "sScrollY": "99%",
+//                    "bLengthChange": true,
+                    "sDom": '<"buyers-table-search"f>rt<"ui-dialog-titlebar ui-widget-header ui-helper-clearfix"lip>',
+//                    "bPaginate": true,
+//					"sPaginationType": "full_numbers",
+					"bScrollInfinite": true,
+					"bScrollCollapse": true,
+					"sScrollY": "93%",
+					"iDisplayLength": 30,
+					"bProcessing": true,
+					"bServerSide": true,
+					"sAjaxSource": "<?php echo $this->websiteUrl;?>plugin/buyerarea?run=clientList",
                     "aoColumnDefs": [
-                        { "bSortable": false, "aTargets": [ -1 ] }//,
-//                        { "sWidth": '70px', "aTargets": [ -1 ] },
+                        { "bSortable": false, "aTargets": [ -1 ] },
+                        { "bSearchable": false, "aTargets": [-1, 0, 3] },
+                        { "sClass": 'buyer-id', "aTargets": [0] },
+                        { "sWidth": '130px', "aTargets": [ -1 ] },
+						{ "asSorting": [ "desc" ], "aTargets": [ 5 ] }
+
 //                        { "sWidth": '35px', "aTargets": [ 0 ] },
 //                        { "sWidth": '25%', "aTargets": [ 1, 2 ] },
 //                        { "sWidth": '20%', "aTargets": [ 3, 4 ] }
-                    ]
+                    ],
+					"fnServerData": function ( sSource, aoData, fnCallback ) {
+						$.ajax( {
+							"dataType": 'json',
+							"type": "POST",
+							"url": sSource,
+							"data": aoData,
+							"success": fnCallback
+						} );
+					}
                 });
 
 				$('fieldset').delegate('select[name$="country"]', 'change', function(){
@@ -314,6 +335,7 @@
 				<span class="ui-dialog-title" style="font-size: 20px"><?php echo $this->translate('Manage clients'); ?></span>
 				<button class="" id="button-settings" ><?php echo $this->translate('Settings'); ?></button>
 				<button class="" id="button-import" ><?php echo $this->translate('Import CSV'); ?></button>
+<!--				<a href="<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=manageClients" target="_blank" class="ui-corner-all" role="button"><span class="ui-icon ui-icon-copy">open in new tab</span></a>-->
 				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
 			</div>
             <div id="dialogs-container" style="display: none">
@@ -339,7 +361,7 @@
                                 <p><label for="billing-address-company"><?php echo $this->translate('Company'); ?>:</label><input type="text" name="billing-address-company" value="" /></p>
                                 <p><label for="billing-address-email">E-mail:</label><input type="text" name="billing-address-email" value="" /></p>
                                 <p><label for="billing-address-phone"><?php echo $this->translate('Phone'); ?>:</label><input type="text" name="billing-address-phone" value="" /></p>
-                                <p><label for="billing-address-mobile"><?php echo $this->translate('Mobile'); ?>:</label><input type="text" name="billing-address-mobile" value="" /></p>
+                                <p><label for="billing-address-mobile"><?php echo $this->translate('Mobile'); ?>:</label><input type="text" name="billing-address-mobile" value="" disabled="true"/></p>
                                 <p><label for="billing-address-country"><?php echo $this->translate('Country'); ?>:</label>
                                     <?php echo $this->formSelect('billing-address-country', null, null, RCMS_Object_QuickConfig_QuickConfig::$worldCountries); ?>
                                 </p>
@@ -402,7 +424,7 @@
 
             <div id="buyerarea_manageclients" style="position: relative; height: 90%">
                 <?php if ($this->buyers) : ?>
-                <table class="buyerarea_buyertable" id="buyerarea_buyers" width="99%">
+                <table class="buyerarea_buyertable" id="buyerarea_buyers">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -414,7 +436,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($this->buyers as $buyer) :?>
+                    <?php /*foreach ($this->buyers as $buyer) :?>
 						<tr>
                             <td class="buyer-id"><?php echo $buyer['id']; ?></td>
                             <td><?php echo $buyer['nickname'] ; ?></td>
@@ -432,7 +454,7 @@
                                 </div>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php endforeach; */ ?>
                     </tbody>
                 </table>
                 <?php else: ?>

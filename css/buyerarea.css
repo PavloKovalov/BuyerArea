@@ -27,6 +27,10 @@ table {
     font-size: 13px;
 }
 
+table#buyerarea_buyers {
+	width: 100%;
+}
+
 #buyerarea_main #buyerarea_userinfo {
     display: block;
     position: fixed;
@@ -75,11 +79,30 @@ table {
     float: right;
 }
 
+.dataTables_lenght {
+	float: left
+}
 .dataTables_filter {
     float: right;
     padding: 2px 10px;
 }
 
+#buyerarea_buyers_processing {
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+    -moz-box-shadow: 0 0 10px #777777;
+    -webkit-box-shadow: 0 0 10px #777777;
+    box-shadow: 0 0 10px #777777;
+    background: none repeat scroll 0 0 #EEEEEE;
+    border: 10px solid #7C7C7C;
+    left: 45%;
+    position: fixed;
+    top: 40%;
+	padding: 30px;
+	font-weight: bold;
+	text-align: center;
+}
 /*** Table body ***/
 .dataTables_wrapper tr {
     
@@ -99,10 +122,10 @@ table {
     width: 100%;
     border-width: 1px 0 !important;
 }
-
-.dataTables_wrapper .dataTables_info {
-    float: left; 
-    margin: 2px 5px;
+.dataTables_length,
+.dataTables_info {
+	display: inline;
+	margin: 2px 20px 2px 0;
 }
 
 .dataTables_wrapper .paging_full_numbers {

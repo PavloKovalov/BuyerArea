@@ -44,12 +44,28 @@ class BuyerareaModel extends Zend_Db_Table_Abstract {
         return $this->getAdapter()->fetchPairs($sql);
     }
 
-    public function selectAllBuyers() {
+    public function selectAllBuyers($conditions = null, $order = null, $limit = null) {
         $sql = $this->getAdapter()->select()->from(array('buyer'=>$this->_userDataTable),array('id'))
                 ->joinLeft(array('user'=>$this->_userTable),'user.id = buyer.user_id',array('login','email','nickname','reg_date','role_id'))
-                ->joinLeft(array('act'=>$this->_userHistoryTable),'act.user_id = buyer.user_id', array('action'=>'ref_type','action_id'=>'ref_id','action_date'=>'date'))->group('buyer.user_id')
-				->order('action_date DESC');
-        return $this->getAdapter()->fetchAssoc($sql);
+                ->joinLeft(array('act'=>$this->_userHistoryTable),'act.user_id = buyer.user_id', array('action'=>'ref_type','action_id'=>'ref_id','action_date'=>'date'))->group('buyer.user_id');
+		if (is_array($conditions) && !empty($conditions['search']) && !empty ($conditions['fields'])){
+			foreach ($conditions['fields'] as $field) {
+				$where = sprintf("%s LIKE ?", $field);
+				$sql->orWhere($where, '%'.strtolower($conditions['search']).'%');
+			}
+		}
+		if (is_array($order)){
+			foreach ($order as $col => $order) {
+				$sql->order($col.' '.strtoupper($order));
+			}
+		}
+		if (is_array($limit)){
+			$sql->limit($limit['count'], $limit['offset']);
+		}
+		//error_log($sql->__toString());
+		$result = $this->getAdapter()->fetchAll($sql);
+		//error_log($this->getAdapter());
+        return $result;
     }
 
     public function selectUserDataByQuoteId($id) {
@@ -133,4 +149,9 @@ class BuyerareaModel extends Zend_Db_Table_Abstract {
 
         return $this->getAdapter()->fetchAll($sql);
     }
+
+	public function getTotalBuyersCount(){
+		$sql = $this->getAdapter()->select()->from($this->_userDataTable, 'COUNT(*)');
+		return $this->getAdapter()->fetchOne($sql);
+	}
 }

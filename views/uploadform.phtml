@@ -22,8 +22,7 @@
 				$(this).closest(':ui-dialog').dialog( "option", "buttons",
 					{
 						"<?php echo $this->translate('Import'); ?>" : function(){
-							$(this).find('form#importcsv').submit();
-							$(this).dialog( 'close' );
+							$(this).find('form#importcsv').submit().end().dialog( 'close' );
 						}
 					}
 				);

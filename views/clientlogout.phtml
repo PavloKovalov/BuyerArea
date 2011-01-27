@@ -1,0 +1,8 @@
+<a href="javascript:;" onclick="clientLogout('<?php echo $this->websiteUrl; ?>')"><?php echo $this->translate('Logout');?></a>
+<script type="text/javascript">
+	function clientLogout(siteUrl) {
+		var returnTo = document.location.href;
+		var completeHref = siteUrl + 'sys/login/memberlogout?returnTo=' + returnTo.replace(siteUrl, '');
+		document.location.href = completeHref;
+	}
+</script>
