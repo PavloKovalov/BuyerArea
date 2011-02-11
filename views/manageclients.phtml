@@ -229,7 +229,8 @@
 								$.post(
 									'<?php echo $this->websiteUrl;?>plugin/buyerarea?run=settings'
 									,{settings:
-											{ email : $(this).find('textarea#email-template').val() }
+											{ email : $(this).find('textarea#email-template').val(),
+											  autoemail: $(this).find('#email-autosend').attr('checked') }
 									}
 									,function(responce){
 										if (responce.done){ 

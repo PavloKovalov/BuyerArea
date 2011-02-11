@@ -33,6 +33,9 @@
 	#buyerarea_settings #email-template-help-container ul {
 		
 	}
+	#buyerarea_settings form div {
+		padding: 4px 1px;
+	}
 </style>
 <div class="buyerarea">
 	<div id="buyerarea_settings">
@@ -45,22 +48,27 @@
 			</li>
 		</ul>
 		<form>
-			<label for="email-template"><?php echo $this->translate('E-mail template'); ?>:</label>
-			<div style="position: relative">
-				<textarea id="email-template" style="width: 100%; height: 250px; min-height: 100px; padding: 5px"><?php echo $this->settings['email']; ?></textarea>
-				<div id="email-template-help" class="ui-state-highlight">
-					<span class="ui-icon ui-icon-help" title="help"/>
-				</div>
-				<div id="email-template-help-container">
-					<h3 align="center">You can use following widgets for your template:</h3>
-					<ul>
-						<li><b>{websiteurl}</b> - Url of your website</li>
-						<li><b>{login}</b> - User login</li>
-						<li><b>{password}</b> - User password</li>
-					</ul>
+			<div style="border-bottom: 1px dashed #ccc;">
+				<label for="email-autosend"><?php echo $this->translate('Send email automaticaly');?></label>
+				<?php echo $this->formCheckbox('email-autosend', null, array('checked'=> 'true'==$this->settings['autoemail'], 'style'=>'margin: 0 10px;'));?>
+			</div>
+			<div>
+				<label for="email-template"><?php echo $this->translate('E-mail template'); ?>:</label>
+				<div style="position: relative">
+					<textarea id="email-template" style="width: 100%; height: 250px; min-height: 100px; padding: 5px"><?php echo $this->settings['email']; ?></textarea>
+					<div id="email-template-help" class="ui-state-highlight">
+						<span class="ui-icon ui-icon-help" title="help"/>
+					</div>
+					<div id="email-template-help-container">
+						<h3 align="center">You can use following widgets for your template:</h3>
+						<ul>
+							<li><b>{websiteurl}</b> - Url of your website</li>
+							<li><b>{login}</b> - User login</li>
+							<li><b>{password}</b> - User password</li>
+						</ul>
+					</div>
 				</div>
 			</div>
-				
 		</form>
 	</div>
 </div>

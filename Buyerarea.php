@@ -22,9 +22,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
     private $_session       = null;
     private $_loggedUser    = null;
     private $_isAdminLogged = false;
+	private $_settings		= null;
     private $_options;
 	private $_sitePath;
-
+	
 	public function __construct($options, $data) {
         $this->_model = new BuyerareaModel();
         $this->_view  = new Zend_View();
@@ -53,6 +54,8 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         $this->_view->websiteUrl = $this->_websiteUrl;
 
 		$this->_sitePath = unserialize(Zend_Registry::get('config'))->website->website->path;
+
+		$this->_settings = $this->_model->selectSettings();
 
 		$this->_responce = new Zend_Controller_Response_Http();
 		$this->_request  = new Zend_Controller_Request_Http();
@@ -106,10 +109,10 @@ class Buyerarea implements RCMS_Core_PluginInterface {
      * @param array $billingData - must be associative array with next fields: firstname, lastname, company, email, phone, country, city, state, zip
      * @param array $shippingData - must be associative array with next fields: firstname, lastname, company, email, phone, country, city, state, zip
      * @param array $payment - optional array: 'type' - quote or cart, 'id' - number
+     * @param boolean $notifyWithEmail - send email to user or not (this is not the same thing from settings!)
      * @return <type> - id of created user
      */
     public function createUser($billingData = array(), $shippingData = null, $payment = null, $notifyWithEmail = true) {
-		$settings = $this->_model->selectSettings();
         $billingData['password'] = self::generatePassword(10, true);
         $user = new Buyer();
         $user->setEmail($billingData['email']);
@@ -167,17 +170,19 @@ class Buyerarea implements RCMS_Core_PluginInterface {
         
         if ($user->save()){
 			if ($notifyWithEmail) {
-				$emailBody = $settings['email'];
-				$emailBody = strip_tags($settings['email'], '<p><a><b><br>');
-				$emailBody = preg_replace(array('~{websiteurl}~','~{login}~','~{password}~i'), array($this->_websiteUrl,$user->getLogin(),$billingData['password']), $emailBody);
-				$emailBody = nl2br($emailBody);
-				
-				try {
-					$this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, $emailBody);
-				} catch (Exception $e) {
-					error_log('[SEOTOASTER] [BuyerArea plugin] Mailer error - '.$e->getMessage());
-					error_log($e->getTraceAsString());
-					error_log('[SEOTOASTER] [BuyerArea plugin] - Error sending email to '.$billingAddress['email']);
+				if ($this->_settings['autoemail'] == 'true'){
+					$emailBody = $this->_settings['email'];
+					$emailBody = strip_tags($this->_settings['email'], '<p><a><b><br>');
+					$emailBody = preg_replace(array('~{websiteurl}~','~{login}~','~{password}~i'), array($this->_websiteUrl,$user->getLogin(),$billingData['password']), $emailBody);
+					$emailBody = nl2br($emailBody);
+
+					try {
+						$this->sendEmail($billingAddress['email'], $user->getNickName(), 'Welcome to '.$this->_websiteUrl, $emailBody);
+					} catch (Exception $e) {
+						error_log('[SEOTOASTER] [BuyerArea plugin] Mailer error - '.$e->getMessage());
+						error_log($e->getTraceAsString());
+						error_log('[SEOTOASTER] [BuyerArea plugin] - Error sending email to '.$billingAddress['email']);
+					}
 				}
 			} else {
 				return array('id' => $user->getId(), 'pwd' => $billingData['password']);
