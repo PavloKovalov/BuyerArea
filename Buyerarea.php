@@ -489,7 +489,7 @@ class Buyerarea implements RCMS_Core_PluginInterface {
 			
 			$countyList = RCMS_Object_QuickConfig_QuickConfig::$worldCountries;
 
-			foreach ($data as &$row) {
+			foreach ($data as $row) {
 			   $row = preg_replace('/^null/i', '', array_combine($keys, $row));
 
 			   if (isset($row['billing-email'])&&!empty($row['billing-email'])) {

@@ -157,7 +157,17 @@ table#buyerarea_buyers {
 #userinfo-form select {
     width: 120px;
 }
-
+/*** invoice creation ***/
+.fformated-main {
+	text-align: right;
+	overflow: hidden;
+}
+.fformated-main > div {
+	padding: 3px 0;
+}
+.fformated-main > div > label {
+	float: left;
+}
 /*** import csv ***/
 #buyerarea_import form#importcsv {
 	margin: 5px;

@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html>
 <html>
     <head>
         <?php $this->headScript()->appendFile((false !== @file_get_contents(RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL)) ? RCMS_Object_QuickConfig_QuickConfig::G_JQ_HOSTED_URL : $this->websiteUrl . 'system/js/jquery/jquery.js'); ?>
@@ -120,64 +120,63 @@
                     });
                 });
 
-//                $('.button-cart').button({icons: {primary: "ui-icon-cart"}}).click(function(){
-//                    $( "#dialog-usercarts:ui-dialog" ).dialog( "destroy" );
-//                    var id = $(this).closest('tr').find('td.buyer-id').text();
-//                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getusercarts', {id: id},
-//                        function(responce){
-//                            if (responce.length) {
-//                                $( "#dialog-usercarts").html(responce)
-//                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
-//                                    .find('table#usercarts')
-//                                    .dataTable({
-//                                        "bJQueryUI": true,
-//                                        "bAutoWidth": false,
-//                                        "bPaginate": false,
-//                                        "sScrollY": "300",
-//                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
-//                                    });
-//                            }
-//                        },
-//                        'html'
-//                    );
-//                });
-                
-//                $('.button-quote').button({icons: {primary: "ui-icon-document"}}).click(function(){
-//                    $( "#dialog-userquotes:ui-dialog" ).dialog( "destroy" );
-//                    var id = $(this).closest('tr').find('td.buyer-id').text();
-//                    $.post('<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=getuserquotes', {id: id},
-//                        function(responce){
-//                            if (responce.length) {
-//                                $( "#dialog-userquotes").html(responce)
-//                                    .dialog({modal:true, resizable: false, width: 500, height: 410})
-//                                    .find('table#userquotes')
-//                                    .dataTable({
-//                                        "bJQueryUI": true,
-//                                        "bAutoWidth": false,
-//                                        "bPaginate": false,
-//                                        "sScrollY": "300",
-//                                        "aoColumnDefs": [{ "bSortable": false, "aTargets": [ -1 ]}]
-//                                    });
-//                            }
-//                        },
-//                        'html'
-//                    );
-//                });
 				$('.button-invoice').live('click',function(){
 					var url = $(this).attr('link');
-					var cid = prompt('<?php echo $this->translate('Input invoice ID (only digits)'); ?>:')
-					if (cid) {
-						url = url.replace('{cid}', cid);
-					} else {
-						return false;
-					}
-					var pm = prompt('<?php echo $this->translate('Payment method'); ?>:');
-					if (pm) {
-						url = url.replace('{pm}', pm);
-					} else {
-						url = url.replace('{pm}', '');
-					}
-					window.location.href=url;
+					$('#dialog-invoice:ui-dialog').dialog('destroy');
+					$('#dialog-invoice').dialog({
+						modal: true,
+						resizable: false,
+						draggable: false,
+						height: 190,
+						width: 350,
+						zIndex: 2000,
+						title: 'Create invoice',
+						buttons: [
+							{
+								text: "OK",
+								click: function(){									
+									var invoiceId		= $('#invoice_id').val();
+									var paymentMethod	= $('#payment_method').val();
+									var shippingTaxRate	= $('#shipping_tax_rate').val();
+
+									paymentMethod = paymentMethod.replace(/^\s+/, '');
+									paymentMethod = paymentMethod.replace(/\s+$/, '');
+
+									if (/^\d+$/.test(invoiceId) === false){
+										$('#invoice_id').focus().prev('label').animate({color: 'red'}, 800).animate({color: 'black'}, 600);
+										return;
+									} else {
+										url = url.replace('{cid}', invoiceId);
+									}
+									
+									url = url.replace('{pm}', paymentMethod);
+
+									if (shippingTaxRate.length && isNaN(shippingTaxRate)){
+										$('#shipping_tax_rate').focus().prev('label').animate({color: 'red'}, 800).animate({color: 'black'}, 600);
+										return;
+									} else {
+										url += '/shippingtaxrate/'+parseFloat(shippingTaxRate)+'/';
+									}
+									$(this).dialog("destroy");
+									if (window !== top) {
+										top.location.href = url;
+									} else {
+										window.location.href = url;
+									}
+								}
+							}
+						],
+						open: function(event, ui) {
+							var zIndex = parseInt($('#dialog-invoice').dialog( "option", "zIndex" )) - 1;
+							$('#dialog-invoice:ui-dialog')
+								.parent()
+								.prev('div.ui-widget-overlay')
+								.css({zIndex: zIndex });
+						},
+						close: function(event, ui) {
+							$(this).dialog("destroy");
+						}
+					});
 				});
 				$('.button-quote').live('click',function(){
 					var url = $(this).attr('link');
@@ -337,9 +336,23 @@
 				<button class="" id="button-settings" ><?php echo $this->translate('Settings'); ?></button>
 				<button class="" id="button-import" ><?php echo $this->translate('Import CSV'); ?></button>
 <!--				<a href="<?php echo $this->websiteUrl; ?>plugin/buyerarea?run=manageClients" target="_blank" class="ui-corner-all" role="button"><span class="ui-icon ui-icon-copy">open in new tab</span></a>-->
-				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a>
+				<a href="#" onclick="parent.tb_remove();" class="ui-dialog-titlebar-close ui-corner-all" role="button" title="<?php echo $this->translate('close');?>"><span class="ui-icon ui-icon-closethick">close</span></a>
 			</div>
             <div id="dialogs-container" style="display: none">
+				<div id="dialog-invoice" class="fformated-main" style="float: none !important;">
+					<div class="field">
+						<label for="invoice_id"><?php echo $this->translate('Invoice id');?>:</label>
+						<input type="text" name="invoice_id" id="invoice_id" />
+					</div>
+					<div class="field">
+						<label for="payment_method"><?php echo $this->translate('Payment method');?>:</label>
+						<input type="text" name="payment_method" id="payment_method" />
+					</div>
+					<div class="field">
+						<label for="shipping_tax_rate"><?php echo $this->translate('Shipping tax rate');?>, %:</label>
+						<input type="text" name="shipping_tax_rate" id="shipping_tax_rate" />
+					</div>
+				</div>
 				<div id="dialog-import" title="<?php echo $this->translate('Import CSV'); ?>">
 				</div>
 				<div id="dialog-settings" title="<?php echo $this->translate('Settings'); ?>">
@@ -437,25 +450,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <?php /*foreach ($this->buyers as $buyer) :?>
-						<tr>
-                            <td class="buyer-id"><?php echo $buyer['id']; ?></td>
-                            <td><?php echo $buyer['nickname'] ; ?></td>
-                            <td><?php echo $buyer['email']; ?></td>
-                            <td><?php echo date('d M Y H:i:s', strtotime($buyer['reg_date'])); ?></td>
-                            <td><?php echo $buyer['action'].' #'.$buyer['action_id'];?> on <?php echo date('d M Y H:i:s', strtotime($buyer['action_date']));?></td>
-                            <td align="center">
-                                <div class="user-toolbar"> <!--ui-widget-header ui-corner-all-->
-                                    <button class="user-toolbar-button button-info" ><?php echo $this->translate('User info'); ?></button>
-<!--
-									<button class="user-toolbar-button button-cart" >Carts</button>
-                                    <button class="user-toolbar-button button-quote" >Quotes</button>
--->
-                                    <button class="user-toolbar-button button-delete" ><?php echo $this->translate('Delete'); ?></button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; */ ?>
+                    
                     </tbody>
                 </table>
                 <?php else: ?>
